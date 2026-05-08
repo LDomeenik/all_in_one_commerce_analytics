@@ -9,6 +9,7 @@ env/
 
 .env
 
+00_data/
 data/raw/
 data/processed/
 data/output/

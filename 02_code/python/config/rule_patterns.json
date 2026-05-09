@@ -1,0 +1,44 @@
+{
+  "order_id": {
+    "patterns": [
+      "(order|ord).*(id|no|num|number)$",
+      "(purchase|transaction).*(id|no|num|number)$"
+    ],
+    "confidence": 0.8
+  },
+  "customer_id": {
+    "patterns": ["(customer|cust|user|member|buyer).*(id|no|num|number)$"],
+    "confidence": 0.8
+  },
+  "order_date": {
+    "patterns": ["(order|purchase|paid|created).*(date|dt|time|timestamp|at)$"],
+    "confidence": 0.78
+  },
+  "revenue": {
+    "patterns": ["(revenue|sales|gmv|amount|total|price|value|payment|paid)"],
+    "confidence": 0.72
+  },
+  "quantity": {
+    "patterns": ["(qty|quantity|count|cnt|units?)$"],
+    "confidence": 0.75
+  },
+  "unit_price": {
+    "patterns": [
+      "(unit|item|product|goods).*(price|cost)",
+      "(price|unit_price|sale_price)$"
+    ],
+    "confidence": 0.75
+  },
+  "shipping_fee": {
+    "patterns": ["(shipping|delivery|freight).*(fee|cost|amount|price)"],
+    "confidence": 0.75
+  },
+  "payment_method": {
+    "patterns": ["(payment|pay).*(method|type|means)"],
+    "confidence": 0.75
+  },
+  "seller_id": {
+    "patterns": ["(seller|vendor|store|merchant).*(id|no|num|number)$"],
+    "confidence": 0.78
+  }
+}

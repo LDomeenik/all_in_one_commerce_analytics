@@ -19,7 +19,7 @@ from python.app.services.file_uploader import (
     create_file_metadata
 )
 
-from python.app.services.column_mapper import map_columns_by_alias
+from python.app.services.column_mapper import map_columns
 from python.app.ui.mapping_result_view import render_mapping_result
 
 
@@ -80,7 +80,7 @@ def render_upload_page():
         st.dataframe(df.head(20))
 
         # 컬럼 자동 매핑 실행
-        mapping_result = map_columns_by_alias(metadata["columns"])
+        mapping_result = map_columns(metadata["columns"])
 
         # 컬럼 자동 매핑 결과 출력
         render_mapping_result(mapping_result)

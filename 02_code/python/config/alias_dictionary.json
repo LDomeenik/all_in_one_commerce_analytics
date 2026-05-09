@@ -19,6 +19,8 @@
   "order_item_id": [
     "order_item_id",
     "orderitemid",
+    "order_item_no",
+    "orderitemno",
     "order_item",
     "orderitem",
     "item_id",

@@ -9,6 +9,8 @@ upload_page.py
     - 파일 메타데이터 출력
     - 데이터 미리보기 출력
     - 컬럼 자동 매핑 화면 출력
+    - 전처리 모듈 실행
+    - 전처리 결과 요약 출력
 """
 
 
@@ -21,6 +23,7 @@ from python.app.services.file_uploader import (
 
 from python.app.services.column_mapper import map_columns
 from python.app.services.column_mapping_applier import apply_column_mapping
+from python.app.services.preprocessor import preprocess_staging_dataframe
 
 from python.app.ui.mapping_result_view import render_mapping_result
 
@@ -114,6 +117,21 @@ def render_upload_page():
             
             st.write("### Staging 데이터 미리보기")
             st.dataframe(staging_df.head(20))
+
+            # 전처리
+            preprocessed_df, preprocessing_summary = preprocess_staging_dataframe(staging_df)
+
+            st.session_state["preprocessed_df"] = preprocessed_df
+            st.session_state["preprocessing_summary"] = preprocessing_summary
+
+            st.divider()
+            st.subheader("4. 전처리 결과")
+
+            st.write("### 전처리 요약")
+            st.json(preprocessing_summary)
+
+            st.write("### 전처리 완료 데이터 미리보기")
+            st.dataframe(preprocessed_df.head(20))
 
         return raw_df, metadata, confirmed_mapping_result
     

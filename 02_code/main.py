@@ -8,6 +8,7 @@ Streamlit 앱 실행 진입점
     - 파일 업로드 화면 호출
     - 업로드 결과 상태 확인
     - Human Review 완료 여부 확인
+    - 전처리 완료 후 다음 단계 안내
 """
 
 
@@ -35,7 +36,9 @@ def main():
     if df is not None and metadata is not None and confirmed_mapping_result is not None:
         st.divider()
         st.subheader("다음 단계")
-        st.write("확정된 컬럼 매핑 결과를 기반으로 전처리 단계로 이동할 수 있습니다.")
+        st.write("전처리가 완료되었습니다. "
+                 "다음 단계로 분석 모듈별 분석 가능 여부를 진단할 수 있습니다."
+        )
 
 
 # 앱 실행

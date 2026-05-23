@@ -1,0 +1,218 @@
+{
+  "order_id": {
+    "type": "string",
+    "required_for": ["eda", "kpi", "cohort", "rfm", "product", "delivery"],
+    "grain": "order",
+    "category": "core"
+  },
+  "order_date": {
+    "type": "date",
+    "required_for": ["eda", "kpi", "cohort", "rfm", "delivery"],
+    "grain": "order",
+    "category": "core"
+  },
+  "customer_id": {
+    "type": "string",
+    "required_for": ["cohort", "rfm"],
+    "grain": "order",
+    "category": "core"
+  },
+  "revenue": {
+    "type": "numeric",
+    "required_for": ["kpi", "rfm"],
+    "grain": "order",
+    "category": "core"
+  },
+  "order_item_id": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "core"
+  },
+  "customer_name": {
+    "type": "string",
+    "required_for": [],
+    "grain": "customer",
+    "category": "customer"
+  },
+  "customer_unique_id": {
+    "type": "string",
+    "required_for": [],
+    "grain": "customer",
+    "category": "customer"
+  },
+  "customer_region": {
+    "type": "string",
+    "required_for": [],
+    "grain": "customer",
+    "category": "customer"
+  },
+  "customer_city": {
+    "type": "string",
+    "required_for": [],
+    "grain": "customer",
+    "category": "customer"
+  },
+  "customer_state": {
+    "type": "string",
+    "required_for": [],
+    "grain": "customer",
+    "category": "customer"
+  },
+  "signup_date": {
+    "type": "date",
+    "required_for": [],
+    "grain": "customer",
+    "category": "customer"
+  },
+  "product_id": {
+    "type": "string",
+    "required_for": ["product"],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "product_name": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "product_category": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "brand_name": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "quantity": {
+    "type": "integer",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "unit_price": {
+    "type": "numeric",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "item_revenue": {
+    "type": "numeric",
+    "required_for": ["product"],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "discount_amount": {
+    "type": "numeric",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "product"
+  },
+  "payment_id": {
+    "type": "string",
+    "required_for": [],
+    "grain": "payment",
+    "category": "payment"
+  },
+  "payment_method": {
+    "type": "string",
+    "required_for": [],
+    "grain": "payment",
+    "category": "payment"
+  },
+  "payment_amount": {
+    "type": "numeric",
+    "required_for": [],
+    "grain": "payment",
+    "category": "payment"
+  },
+  "payment_installments": {
+    "type": "integer",
+    "required_for": [],
+    "grain": "payment",
+    "category": "payment"
+  },
+  "payment_date": {
+    "type": "date",
+    "required_for": [],
+    "grain": "payment",
+    "category": "payment"
+  },
+  "order_status": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order",
+    "category": "logistics"
+  },
+  "logistics_id": {
+    "type": "string",
+    "required_for": [],
+    "grain": "logistics",
+    "category": "logistics"
+  },
+  "shipped_date": {
+    "type": "date",
+    "required_for": [],
+    "grain": "logistics",
+    "category": "logistics"
+  },
+  "delivered_date": {
+    "type": "date",
+    "required_for": ["delivery"],
+    "grain": "logistics",
+    "category": "logistics"
+  },
+  "estimated_delivery_date": {
+    "type": "date",
+    "required_for": [],
+    "grain": "logistics",
+    "category": "logistics"
+  },
+  "shipping_fee": {
+    "type": "numeric",
+    "required_for": [],
+    "grain": "order_item",
+    "category": "logistics"
+  },
+  "seller_id": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order",
+    "category": "core"
+  },
+  "seller_name": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order",
+    "category": "core"
+  },
+  "review_score": {
+    "type": "numeric",
+    "required_for": [],
+    "grain": "order",
+    "category": "core"
+  },
+  "review_count": {
+    "type": "integer",
+    "required_for": [],
+    "grain": "order",
+    "category": "core"
+  },
+  "delivery_days": {
+    "type": "integer",
+    "required_for": [],
+    "grain": "logistics",
+    "category": "derived"
+  },
+  "is_delayed": {
+    "type": "boolean",
+    "required_for": [],
+    "grain": "logistics",
+    "category": "derived"
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "order_id": {
+    "patterns": [
+      "(order|ord).*(id|no|num|number)$",
+      "(purchase|transaction).*(id|no|num|number)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "order_item_id": {
+    "patterns": [
+      "(order_item|orderitem|item).*(id|no|num|number)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "order_date": {
+    "patterns": [
+      "(order|purchase|paid|created).*(date|dt|time|timestamp|at)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "customer_id": {
+    "patterns": [
+      "(customer|cust|user|member|buyer).*(id|no|num|number)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "product_id": {
+    "patterns": [
+      "(product|prod|goods|item|sku).*(id|no|num|number)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "revenue": {
+    "patterns": [
+      "(revenue|sales|gmv|total).*(amount|price|value)$",
+      "^(revenue|sales|gmv)$"
+    ],
+    "confidence": 0.70
+  },
+
+  "item_revenue": {
+    "patterns": [
+      "(item|line|product).*(revenue|amount|total)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "quantity": {
+    "patterns": [
+      "(qty|quantity|count|cnt|units?)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "unit_price": {
+    "patterns": [
+      "(unit|item|product|goods).*(price|cost)$",
+      "^(price|unit_price|sale_price)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "discount_amount": {
+    "patterns": [
+      "(discount|coupon).*(amount|price|value)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "shipping_fee": {
+    "patterns": [
+      "(shipping|delivery|freight).*(fee|cost|amount|price)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "payment_method": {
+    "patterns": [
+      "(payment|pay).*(method|type|means)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "payment_amount": {
+    "patterns": [
+      "(payment|paid).*(amount|price|value)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "order_status": {
+    "patterns": [
+      "(order|delivery).*(status|state|condition)$",
+      "^(status|state)$"
+    ],
+    "confidence": 0.70
+  },
+
+  "shipped_date": {
+    "patterns": [
+      "(ship|shipped|shipping|dispatch).*(date|dt|at)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "delivered_date": {
+    "patterns": [
+      "(deliver|delivered|delivery|received).*(date|dt|at)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "estimated_delivery_date": {
+    "patterns": [
+      "(est|estimated|expected).*(delivery|deliver).*(date|dt|at)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "seller_id": {
+    "patterns": [
+      "(seller|vendor|store|merchant).*(id|no|num|number)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "review_score": {
+    "patterns": [
+      "(review|rating).*(score|rate|point)$",
+      "^(rating|score|rate)$"
+    ],
+    "confidence": 0.70
+  },
+
+  "signup_date": {
+    "patterns": [
+      "(signup|join|register|enroll).*(date|dt|at)$"
+    ],
+    "confidence": 0.75
+  }
+}

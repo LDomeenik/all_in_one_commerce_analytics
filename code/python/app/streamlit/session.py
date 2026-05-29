@@ -24,6 +24,7 @@ UNMAPPED_COLUMNS = "unmapped_columns"
 PREPROCESSED_DF = "preprocessed_df"
 PREPROCESSING_SUMMARY = "preprocessing_summary"
 DIAGNOSIS_RESULT = "diagnosis_result"
+EDA_RESULT = "eda_result"
 
 
 # init_session: session_state 초기화
@@ -52,7 +53,8 @@ def init_session():
         UNMAPPED_COLUMNS: [],
         PREPROCESSED_DF: None,
         PREPROCESSING_SUMMARY: None,
-        DIAGNOSIS_RESULT: None
+        DIAGNOSIS_RESULT: None,
+        EDA_RESULT: None
     }
 
     for key, value in defaults.items():

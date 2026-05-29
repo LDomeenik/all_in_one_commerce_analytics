@@ -278,8 +278,8 @@ def validate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         없음
     """
 
-    result_df = _add_derived_columns(result_df)
-    result_df = _add_missing_flags(df)
+    result_df = _add_derived_columns(df)
+    result_df = _add_missing_flags(result_df)
     result_df = _add_date_validation_flags(result_df)
     result_df = _add_amount_validation_flags(result_df)
     result_df = _add_quantity_validation_flags(result_df)

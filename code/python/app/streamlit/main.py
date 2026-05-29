@@ -19,13 +19,15 @@ from app.streamlit.session import (
     RAW_DF, 
     STAGING_DF, 
     PREPROCESSED_DF, 
-    DIAGNOSIS_RESULT
+    DIAGNOSIS_RESULT,
+    EDA_RESULT
 )
 
 from app.streamlit.views.upload_page import render_upload_page
 from app.streamlit.views.mapping_page import render_mapping_page
 from app.streamlit.views.preprocessing_page import render_preprocessing_page
 from app.streamlit.views.diagnosis_page import render_diagnosis_page
+from app.streamlit.views.eda_page import render_eda_page
 
 
 # 페이지 기본 설정
@@ -60,7 +62,7 @@ def main():
 
     page = st.sidebar.radio(
         "페이지 선택",
-        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단"],
+        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단", "EDA"],
         index=0
     )
 
@@ -89,6 +91,11 @@ def main():
     else:
         st.sidebar.write("⬜ 진단 대기 중")
 
+    if get_state(EDA_RESULT) is not None:
+        st.sidebar.write("✅ EDA 완료")
+    else:
+        st.sidebar.write("⬜ EDA 대기 중")
+
     # 페이지 렌더링
     if page == "데이터 업로드":
         render_upload_page()
@@ -98,6 +105,8 @@ def main():
         render_preprocessing_page()
     elif page == "진단":
         render_diagnosis_page()
+    elif page == "EDA":
+        render_eda_page()
 
 
 if __name__ == "__main__":

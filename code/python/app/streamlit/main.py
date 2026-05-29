@@ -13,10 +13,19 @@ Streamlit 앱 진입점 모듈
 
 import streamlit as st
 
-from app.streamlit.session import init_session, get_state, RAW_DF, STAGING_DF, PREPROCESSED_DF
+from app.streamlit.session import (
+    init_session, 
+    get_state, 
+    RAW_DF, 
+    STAGING_DF, 
+    PREPROCESSED_DF, 
+    DIAGNOSIS_RESULT
+)
+
 from app.streamlit.views.upload_page import render_upload_page
 from app.streamlit.views.mapping_page import render_mapping_page
 from app.streamlit.views.preprocessing_page import render_preprocessing_page
+from app.streamlit.views.diagnosis_page import render_diagnosis_page
 
 
 # 페이지 기본 설정
@@ -51,7 +60,7 @@ def main():
 
     page = st.sidebar.radio(
         "페이지 선택",
-        options=["데이터 업로드", "컬럼 매핑", "전처리"],
+        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단"],
         index=0
     )
 
@@ -74,6 +83,11 @@ def main():
         st.sidebar.write("✅ 전처리 완료")
     else:
         st.sidebar.write("⬜ 전처리 대기 중")
+    
+    if get_state(DIAGNOSIS_RESULT) is not None:
+        st.sidebar.write("✅ 진단 완료")
+    else:
+        st.sidebar.write("⬜ 진단 대기 중")
 
     # 페이지 렌더링
     if page == "데이터 업로드":
@@ -82,6 +96,8 @@ def main():
         render_mapping_page()
     elif page == "전처리":
         render_preprocessing_page()
+    elif page == "진단":
+        render_diagnosis_page()
 
 
 if __name__ == "__main__":

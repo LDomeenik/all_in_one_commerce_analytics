@@ -79,7 +79,7 @@
   },
   "product_category": {
     "type": "string",
-    "required_for": [],
+    "required_for": ["category"],
     "grain": "order_item",
     "category": "product"
   },

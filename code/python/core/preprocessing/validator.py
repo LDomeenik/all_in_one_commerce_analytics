@@ -37,7 +37,7 @@ def _add_missing_flags(df: pd.DataFrame) -> pd.DataFrame:
     result_df = df.copy()
 
     # 전체 분석 모듈의 필수 컬럼 수집
-    modules = ["eda", "kpi", "cohort", "rfm", "product", "delivery"]
+    modules = ["eda", "kpi", "cohort", "rfm", "product", "category", "delivery"]
     required_columns = set()
 
     for module in modules:
@@ -250,6 +250,16 @@ def _add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
             & (result_df["delivered_date"] > result_df["estimated_delivery_date"])
         )
 
+    # item_revenue 생성
+    if (
+        "item_revenue" not in result_df.columns
+        and "unit_price" in result_df.columns
+        and "quantity" in result_df.columns
+    ):
+        result_df["item_revenue"] = (
+            result_df["unit_price"] * result_df["quantity"]
+        )
+
     return result_df
 
 
@@ -268,11 +278,11 @@ def validate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         없음
     """
 
+    result_df = _add_derived_columns(result_df)
     result_df = _add_missing_flags(df)
     result_df = _add_date_validation_flags(result_df)
     result_df = _add_amount_validation_flags(result_df)
     result_df = _add_quantity_validation_flags(result_df)
     result_df = _add_duplicate_flags(result_df)
-    result_df = _add_derived_columns(result_df)
 
     return result_df

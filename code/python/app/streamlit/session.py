@@ -23,6 +23,7 @@ RENAME_DICT = "rename_dict"
 UNMAPPED_COLUMNS = "unmapped_columns"
 PREPROCESSED_DF = "preprocessed_df"
 PREPROCESSING_SUMMARY = "preprocessing_summary"
+DIAGNOSIS_RESULT = "diagnosis_result"
 
 
 # init_session: session_state 초기화
@@ -50,7 +51,8 @@ def init_session():
         RENAME_DICT: None,
         UNMAPPED_COLUMNS: [],
         PREPROCESSED_DF: None,
-        PREPROCESSING_SUMMARY: None
+        PREPROCESSING_SUMMARY: None,
+        DIAGNOSIS_RESULT: None
     }
 
     for key, value in defaults.items():

@@ -21,6 +21,8 @@ CONFIRMED_MAPPING = "confirmed_mapping"
 STAGING_DF = "staging_df"
 RENAME_DICT = "rename_dict"
 UNMAPPED_COLUMNS = "unmapped_columns"
+PREPROCESSED_DF = "preprocessed_df"
+PREPROCESSING_SUMMARY = "preprocessing_summary"
 
 
 # init_session: session_state 초기화
@@ -46,7 +48,9 @@ def init_session():
         CONFIRMED_MAPPING: None,
         STAGING_DF: None,
         RENAME_DICT: None,
-        UNMAPPED_COLUMNS: []
+        UNMAPPED_COLUMNS: [],
+        PREPROCESSED_DF: None,
+        PREPROCESSING_SUMMARY: None
     }
 
     for key, value in defaults.items():

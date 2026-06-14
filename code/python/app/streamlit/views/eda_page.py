@@ -13,8 +13,11 @@ EDA 분석 UI 페이지 모듈
 """
 
 
+from re import M
+
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 from core.analytics.eda import run_eda
 from app.streamlit.session import (
@@ -24,6 +27,7 @@ from app.streamlit.session import (
     DIAGNOSIS_RESULT,
     EDA_RESULT
 )
+from app.streamlit.constants import CHART_COLORS
 
 
 # render_eda_page: EDA 페이지 렌더링
@@ -190,17 +194,49 @@ def _render_time_series(time_series: pd.DataFrame):
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write("월별 주문 수")
-        st.line_chart(
-            time_series.set_index("year_month")["order_count"]
+        fig = px.line(
+            time_series,
+            x="year_month",
+            y="order_count",
+            title="월별 주문 수",
+            markers=True,
+            labels={"year_month":"", "order_count":"건"},
+            color_discrete_sequence=[CHART_COLORS["order"]]
         )
+        fig.update_traces(
+            line=dict(width=2),
+            marker=dict(size=8)
+        )
+        fig.update_layout(
+            hovermode="x unified",
+            showlegend=False,
+            yaxis=dict(tickformat=",", title=""),
+            xaxis=dict(type="category", title="")
+        )
+        st.plotly_chart(fig, use_container_width=True)
     
     with col2:
         if "revenue" in time_series.columns:
-            st.write("월별 매출")
-            st.line_chart(
-                time_series.set_index("year_month")["revenue"]
+            fig = px.line(
+                time_series,
+                x="year_month",
+                y="revenue",
+                title="월별 매출",
+                markers=True,
+                labels={"year_month":"", "revenue":"매출"},
+                color_discrete_sequence=[CHART_COLORS["revenue"]]
             )
+            fig.update_traces(
+                line=dict(width=2),
+                marker=dict(size=8)
+            )
+            fig.update_layout(
+                hovermode="x unified",
+                showlegend=False,
+                yaxis=dict(title="", tickformat=","),
+                xaxis=dict(type="category", title="")
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
 
 # _render_distribution: 주요 컬럼 분포 차트 출력 내장 함수
@@ -225,16 +261,34 @@ def _render_distribution(distribution: dict):
         st.info("분포 분석 가능한 컬럼이 없습니다.")
         return
 
+    # 컬럼별 색상 매핑
+    color_map = {
+        "order_status" : CHART_COLORS["order"],
+        "product_category" : CHART_COLORS["category"],
+        "payment_method" : CHART_COLORS["revenue"]
+    }
+
     # 컬럼별 bar_chart 출력
     # 3열 그리드로 나란히 출력
     cols = st.columns(len(distribution))
 
     for i, (col_name, dist_df) in enumerate(distribution.items()):
         with cols[i]:
-            st.write(f"**{col_name}**")
-            st.bar_chart(
-                dist_df.set_index(col_name)["count"]
+            fig = px.bar(
+                dist_df,
+                x=col_name,
+                y="count",
+                title=col_name,
+                labels={col_name: "", "count": "건"},
+                color_discrete_sequence=[color_map.get(col_name, CHART_COLORS["order"])]
             )
+            fig.update_layout(
+                hovermode="closest",
+                showlegend=False,
+                yaxis=dict(title="", tickformat=","),
+                xaxis=dict(title="")
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
 
 # _render_column_stats: 수치형 / 문자열 컬럼 통계 출력 내장 함수

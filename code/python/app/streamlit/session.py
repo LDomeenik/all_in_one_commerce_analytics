@@ -26,6 +26,7 @@ PREPROCESSING_SUMMARY = "preprocessing_summary"
 DIAGNOSIS_RESULT = "diagnosis_result"
 EDA_RESULT = "eda_result"
 KPI_RESULT = "kpi_result"
+COHORT_RESULT = "cohort_result"
 
 
 # init_session: session_state 초기화
@@ -56,7 +57,8 @@ def init_session():
         PREPROCESSING_SUMMARY: None,
         DIAGNOSIS_RESULT: None,
         EDA_RESULT: None,
-        KPI_RESULT: None
+        KPI_RESULT: None,
+        COHORT_RESULT: None
     }
 
     for key, value in defaults.items():

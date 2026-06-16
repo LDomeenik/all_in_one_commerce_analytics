@@ -21,7 +21,8 @@ from app.streamlit.session import (
     PREPROCESSED_DF, 
     DIAGNOSIS_RESULT,
     EDA_RESULT,
-    KPI_RESULT
+    KPI_RESULT,
+    COHORT_RESULT
 )
 
 from app.streamlit.views.upload_page import render_upload_page
@@ -30,6 +31,7 @@ from app.streamlit.views.preprocessing_page import render_preprocessing_page
 from app.streamlit.views.diagnosis_page import render_diagnosis_page
 from app.streamlit.views.eda_page import render_eda_page
 from app.streamlit.views.kpi_page import render_kpi_page
+from app.streamlit.views.cohort_page import render_cohort_page
 
 
 # 페이지 기본 설정
@@ -64,7 +66,7 @@ def main():
 
     page = st.sidebar.radio(
         "페이지 선택",
-        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단", "EDA", "KPI"],
+        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단", "EDA", "KPI", "Cohort"],
         index=0
     )
 
@@ -103,6 +105,11 @@ def main():
     else:
         st.sidebar.write("⬜ KPI 분석 대기 중")
 
+    if get_state(COHORT_RESULT) is not None:
+        st.sidebar.write("✅ 코호트 분석 완료")
+    else:
+        st.sidebar.write("⬜ 코호트 분석 대기 중")
+
     # 페이지 렌더링
     if page == "데이터 업로드":
         render_upload_page()
@@ -116,6 +123,8 @@ def main():
         render_eda_page()
     elif page == "KPI":
         render_kpi_page()
+    elif page == "Cohort":
+        render_cohort_page()
 
 
 if __name__ == "__main__":

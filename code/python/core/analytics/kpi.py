@@ -4,9 +4,9 @@ kpi.py
 KPI 분석 모듈
 
 기능:
-    - 매출 지표 계산 (총 매출, 순매출, AOV, 전월 대비 성장률)
-    - 주문 지표 계산 (총 주문 수, 취소율, 전월 대비 성장률)
-    - 고객 지표 계산 (총 고객 수, 신규/재구매 고객 수, 재구매율, 전월 대비 성장률)
+    - 매출 지표 계산 (총 매출, 당월 매출, 순매출, AOV, 당월 AOV, 전월 대비 성장률)
+    - 주문 지표 계산 (총 주문 수, 당월 주문 수, 취소율, 당월 취소율, 전월 대비 성장률)
+    - 고객 지표 계산 (총/당월 고객 수, 신규/재구매 고객, 재구매율, 당월 신규/재구매/재구매율, 전월 대비 성장률)
     - 월별 KPI 추이 계산 (매출, 주문 수, AOV, 고객 수, 취소율, 신규/재구매 고객, 재구매율)
 """
 
@@ -25,9 +25,11 @@ def _get_revenue_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
 
     Returns:
         dict: 매출 지표
-            - total_revenue (float): 총 매출
+            - total_revenue (float): 총 매출 (전체 기간 합계)
+            - current_month_revenue (float | None): 당월 매출
             - net_revenue (float): 순매출
-            - aov (float): 평균 주문 금액
+            - aov (float): 평균 주문 금액 (전체 기간)
+            - current_month_aov (float | None): 당월 AOV
             - revenue_growth (float | None): 전월 대비 매출 성장률 (%)
 
     Raises:
@@ -43,6 +45,13 @@ def _get_revenue_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
     else:
         net_revenue = total_revenue
 
+    current_month_revenue = None
+    current_month_aov = None
+    if len(monthly_trend) >= 1:
+        current_month_revenue = monthly_trend.iloc[-1]["revenue"]
+        if "aov" in monthly_trend.columns:
+            current_month_aov = monthly_trend.iloc[-1]["aov"]
+
     revenue_growth = None
     if len(monthly_trend) >= 2:
         this_month = monthly_trend.iloc[-1]["revenue"]
@@ -52,8 +61,10 @@ def _get_revenue_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
 
     return {
         "total_revenue": total_revenue,
+        "current_month_revenue": current_month_revenue,
         "net_revenue": net_revenue,
         "aov": aov,
+        "current_month_aov": current_month_aov,
         "revenue_growth": revenue_growth
     }
 
@@ -69,8 +80,10 @@ def _get_order_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
 
     Returns:
         dict: 주문 지표
-            - total_orders (int): 총 주문 수
-            - cancel_rate (float | None): 취소율 (%)
+            - total_orders (int): 총 주문 수 (전체 기간)
+            - current_month_orders (int | None): 당월 주문 수
+            - cancel_rate (float | None): 취소율 (전체 기간, %)
+            - current_month_cancel_rate (float | None): 당월 취소율 (%)
             - order_growth (float | None): 전월 대비 주문 수 성장률 (%)
 
     Raises:
@@ -87,6 +100,13 @@ def _get_order_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
     else:
         cancel_rate = None
 
+    current_month_orders = None
+    current_month_cancel_rate = None
+    if len(monthly_trend) >= 1:
+        current_month_orders = monthly_trend.iloc[-1]["order_count"]
+        if "cancel_rate" in monthly_trend.columns:
+            current_month_cancel_rate = monthly_trend.iloc[-1]["cancel_rate"]
+
     order_growth = None
     if len(monthly_trend) >= 2:
         this_month = monthly_trend.iloc[-1]["order_count"]
@@ -96,7 +116,9 @@ def _get_order_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
 
     return {
         "total_orders": total_orders,
+        "current_month_orders": current_month_orders,
         "cancel_rate": cancel_rate,
+        "current_month_cancel_rate": current_month_cancel_rate,
         "order_growth": order_growth
     }
 
@@ -113,10 +135,14 @@ def _get_customer_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
 
     Returns:
         dict: 고객 지표
-            - total_customers (int): 총 고객 수
+            - total_customers (int): 총 고객 수 (전체 기간)
+            - current_month_customers (int | None): 당월 고객 수
             - new_customers (int): 신규 고객 수 (전체 기간 기준 1회 구매 고객)
             - repeat_customers (int): 재구매 고객 수 (전체 기간 기준 2회 이상 구매 고객)
-            - repeat_rate (float): 재구매율 (%)
+            - repeat_rate (float): 재구매율 (전체 기간, %)
+            - current_month_new_customers (int | None): 당월 신규 고객 수
+            - current_month_repeat_customers (int | None): 당월 재구매 고객 수
+            - current_month_repeat_rate (float | None): 당월 재구매율 (%)
             - customer_growth (float | None): 전월 대비 고객 수 성장률 (%)
 
     Raises:
@@ -135,6 +161,21 @@ def _get_customer_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
     repeat_customers = (customer_order_counts >= 2).sum()
     repeat_rate = repeat_customers / total_customers * 100 if total_customers > 0 else 0
 
+    current_month_customers = None
+    current_month_new_customers = None
+    current_month_repeat_customers = None
+    current_month_repeat_rate = None
+
+    if len(monthly_trend) >= 1:
+        if "customer_count" in monthly_trend.columns:
+            current_month_customers = monthly_trend.iloc[-1]["customer_count"]
+        if "new_customers" in monthly_trend.columns:
+            current_month_new_customers = monthly_trend.iloc[-1]["new_customers"]
+        if "repeat_customers" in monthly_trend.columns:
+            current_month_repeat_customers = monthly_trend.iloc[-1]["repeat_customers"]
+        if "repeat_rate" in monthly_trend.columns:
+            current_month_repeat_rate = monthly_trend.iloc[-1]["repeat_rate"]
+
     customer_growth = None
     if len(monthly_trend) >= 2 and "customer_count" in monthly_trend.columns:
         this_month = monthly_trend.iloc[-1]["customer_count"]
@@ -144,9 +185,13 @@ def _get_customer_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
 
     return {
         "total_customers": total_customers,
+        "current_month_customers": current_month_customers,
         "new_customers": new_customers,
         "repeat_customers": repeat_customers,
         "repeat_rate": repeat_rate,
+        "current_month_new_customers": current_month_new_customers,
+        "current_month_repeat_customers": current_month_repeat_customers,
+        "current_month_repeat_rate": current_month_repeat_rate,
         "customer_growth": customer_growth
     }
 
@@ -181,7 +226,6 @@ def _get_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
     result_df = df.copy()
     result_df["year_month"] = result_df["order_date"].dt.strftime("%Y-%m")
 
-    # 기본 집계
     agg_dict = {"order_id": "nunique"}
 
     if "revenue" in result_df.columns:
@@ -202,11 +246,9 @@ def _get_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
         .reset_index(drop=True)
     )
 
-    # aov 추가
     if "revenue" in monthly.columns:
         monthly["aov"] = monthly["revenue"] / monthly["order_count"]
 
-    # 월별 취소율 추가
     if "order_status" in result_df.columns:
         cancel_monthly = (
             result_df[
@@ -221,10 +263,8 @@ def _get_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
         monthly["cancel_count"] = monthly["cancel_count"].fillna(0)
         monthly["cancel_rate"] = monthly["cancel_count"] / monthly["order_count"] * 100
 
-    # 월별 신규 / 재구매 고객 추가
     if "customer_id" in result_df.columns:
 
-        # 고객별 첫 구매 월 계산
         first_purchase = (
             result_df.groupby("customer_id")["year_month"]
             .min()
@@ -234,7 +274,6 @@ def _get_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
 
         result_df = result_df.merge(first_purchase, on="customer_id", how="left")
 
-        # 월별 신규 고객 수 (첫 구매 월 = 해당 월)
         new_customers_monthly = (
             result_df[result_df["year_month"] == result_df["first_month"]]
             .groupby("year_month")["customer_id"]
@@ -243,7 +282,6 @@ def _get_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
             .rename(columns={"customer_id": "new_customers"})
         )
 
-        # 월별 재구매 고객 수 (첫 구매 월 != 해당 월)
         repeat_customers_monthly = (
             result_df[result_df["year_month"] != result_df["first_month"]]
             .groupby("year_month")["customer_id"]
@@ -257,7 +295,6 @@ def _get_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
         monthly["new_customers"] = monthly["new_customers"].fillna(0)
         monthly["repeat_customers"] = monthly["repeat_customers"].fillna(0)
 
-        # 월별 재구매율
         monthly["repeat_rate"] = (
             monthly["repeat_customers"] / monthly["customer_count"] * 100
         )

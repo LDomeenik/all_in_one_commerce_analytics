@@ -147,19 +147,32 @@ def _render_revenue_tab(revenue_stats: dict, monthly_trend: pd.DataFrame):
         없음
     """
 
-    # 핵심 지표 메트릭
+    # 전체 기간 지표
+    st.write("**전체 기간**")
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric(
-            "총 매출",
-            f"{revenue_stats['total_revenue']:,.0f}",
-            f"{revenue_stats['revenue_growth']:+.1f}%" if revenue_stats['revenue_growth'] is not None else None
-        )
+        st.metric("총 매출", f"{revenue_stats['total_revenue']:,.0f}")
     with col2:
         st.metric("순매출", f"{revenue_stats['net_revenue']:,.0f}")
     with col3:
         st.metric("AOV", f"{revenue_stats['aov']:,.2f}")
+
+    # 당월 지표
+    st.write("**당월**")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            "당월 매출",
+            f"{revenue_stats['current_month_revenue']:,.0f}" if revenue_stats['current_month_revenue'] is not None else "데이터 없음",
+            f"{revenue_stats['revenue_growth']:+.1f}%" if revenue_stats['revenue_growth'] is not None else None
+        )
+    with col2:
+        st.metric(
+            "당월 AOV",
+            f"{revenue_stats['current_month_aov']:,.2f}" if revenue_stats['current_month_aov'] is not None else "데이터 없음"
+        )
 
     st.divider()
 
@@ -224,19 +237,32 @@ def _render_order_tab(order_stats: dict, monthly_trend: pd.DataFrame):
         없음
     """
 
-    # 핵심 지표 메트릭
+    # 전체 기간 지표
+    st.write("**전체 기간**")
     col1, col2 = st.columns(2)
 
     with col1:
-        st.metric(
-            "총 주문 수",
-            f"{order_stats['total_orders']:,}",
-            f"{order_stats['order_growth']:+.1f}%" if order_stats['order_growth'] is not None else None
-        )
+        st.metric("총 주문 수", f"{order_stats['total_orders']:,}")
     with col2:
         st.metric(
             "취소율",
             f"{order_stats['cancel_rate']:.1f}%" if order_stats['cancel_rate'] is not None else "데이터 없음"
+        )
+
+    # 당월 지표
+    st.write("**당월**")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            "당월 주문 수",
+            f"{order_stats['current_month_orders']:,.0f}" if order_stats['current_month_orders'] is not None else "데이터 없음",
+            f"{order_stats['order_growth']:+.1f}%" if order_stats['order_growth'] is not None else None
+        )
+    with col2:
+        st.metric(
+            "당월 취소율",
+            f"{order_stats['current_month_cancel_rate']:.1f}%" if order_stats['current_month_cancel_rate'] is not None else "데이터 없음"
         )
 
     st.divider()
@@ -306,15 +332,12 @@ def _render_customer_tab(customer_stats: dict, monthly_trend: pd.DataFrame):
         st.info("customer_id 컬럼이 없어 고객 분석을 수행할 수 없습니다.")
         return
 
-    # 핵심 지표 메트릭
+    # 전체 기간 지표
+    st.write("**전체 기간**")
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric(
-            "총 고객 수",
-            f"{customer_stats['total_customers']:,}",
-            f"{customer_stats['customer_growth']:+.1f}%" if customer_stats['customer_growth'] is not None else None
-        )
+        st.metric("총 고객 수", f"{customer_stats['total_customers']:,}")
     with col2:
         st.metric("신규 고객", f"{customer_stats['new_customers']:,}")
     with col3:
@@ -322,10 +345,35 @@ def _render_customer_tab(customer_stats: dict, monthly_trend: pd.DataFrame):
     with col4:
         st.metric("재구매율", f"{customer_stats['repeat_rate']:.1f}%")
 
-    # 신규 / 재구매 고객 정의 안내
+    # 당월 지표
+    st.write("**당월**")
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "당월 고객 수",
+            f"{customer_stats['current_month_customers']:,.0f}" if customer_stats['current_month_customers'] is not None else "데이터 없음",
+            f"{customer_stats['customer_growth']:+.1f}%" if customer_stats['customer_growth'] is not None else None
+        )
+    with col2:
+        st.metric(
+            "당월 신규 고객",
+            f"{customer_stats['current_month_new_customers']:,.0f}" if customer_stats['current_month_new_customers'] is not None else "데이터 없음"
+        )
+    with col3:
+        st.metric(
+            "당월 재구매 고객",
+            f"{customer_stats['current_month_repeat_customers']:,.0f}" if customer_stats['current_month_repeat_customers'] is not None else "데이터 없음"
+        )
+    with col4:
+        st.metric(
+            "당월 재구매율",
+            f"{customer_stats['current_month_repeat_rate']:.1f}%" if customer_stats['current_month_repeat_rate'] is not None else "데이터 없음"
+        )
+    
     st.caption(
-        "※ 신규 고객: 전체 기간 기준 1회 구매 고객 | "
-        "재구매 고객: 전체 기간 기준 2회 이상 구매 고객"
+    "※ 신규 고객: 전체 기간 기준 1회 구매 고객 | "
+    "재구매 고객: 전체 기간 기준 2회 이상 구매 고객"
     )
 
     st.divider()
@@ -374,7 +422,6 @@ def _render_customer_tab(customer_stats: dict, monthly_trend: pd.DataFrame):
             xaxis=dict(type="category", title=""),
             yaxis=dict(title="", tickformat=",")
         )
-        # 범례 이름 변경
         fig.for_each_trace(lambda t: t.update(
             name="신규 고객" if t.name == "new_customers" else "재구매 고객"
         ))

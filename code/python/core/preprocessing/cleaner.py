@@ -37,7 +37,7 @@ def normalize_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     result_df = df.copy()
 
     for column in result_df.columns:
-        if result_df[column].dtype == "object":
+        if pd.api.types.is_string_dtype(result_df[column]):
             result_df[column] = result_df[column].apply(
                 lambda value: 
                 pd.NA if isinstance(value, str) and value.strip().lower() in MISSING_STRING_VALUES else value
@@ -65,7 +65,7 @@ def strip_string_columns(df: pd.DataFrame) -> pd.DataFrame:
     result_df = df.copy()
 
     for column in result_df.columns:
-        if result_df[column].dtype == "object":
+        if pd.api.types.is_string_dtype(result_df[column]):
             result_df[column] = result_df[column].apply(
                 lambda value:
                 value.strip() if isinstance(value, str) else value

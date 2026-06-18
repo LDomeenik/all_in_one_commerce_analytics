@@ -110,7 +110,7 @@ def _convert_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
         original_not_null = result_df[column].notna()
 
         # 문자열인 경우 쉼표 및 통화기호 제거
-        if result_df[column].dtype == "object":
+        if pd.api.types.is_string_dtype(result_df[column]):
             result_df[column] = (
                 result_df[column]
                 .astype(str)

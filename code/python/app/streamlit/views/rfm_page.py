@@ -131,6 +131,8 @@ def _render_rfm_result():
 
     st.plotly_chart(fig, use_container_width=True)
 
+    st.divider()
+
     # 세그먼트별 매출 비중
     st.write("#### 세그먼트별 매출 비중")
 
@@ -151,6 +153,8 @@ def _render_rfm_result():
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
 
     # 세그먼트 요약 테이블
     st.write("#### 세그먼트 요약")

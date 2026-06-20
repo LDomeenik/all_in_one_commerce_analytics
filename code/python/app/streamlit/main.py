@@ -24,7 +24,8 @@ from app.streamlit.session import (
     KPI_RESULT,
     COHORT_RESULT,
     RFM_RESULT,
-    PRODUCT_RESULT
+    PRODUCT_RESULT,
+    DELIVERY_RESULT
 )
 
 from app.streamlit.views.upload_page import render_upload_page
@@ -36,6 +37,7 @@ from app.streamlit.views.kpi_page import render_kpi_page
 from app.streamlit.views.cohort_page import render_cohort_page
 from app.streamlit.views.rfm_page import render_rfm_page
 from app.streamlit.views.product_page import render_product_page
+from app.streamlit.views.delivery_page import render_delivery_page
 
 
 # 페이지 기본 설정
@@ -70,7 +72,7 @@ def main():
 
     page = st.sidebar.radio(
         "페이지 선택",
-        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단", "EDA", "KPI", "Cohort", "RFM", "상품"],
+        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단", "EDA", "KPI", "Cohort", "RFM", "상품", "배송/운영"],
         index=0
     )
 
@@ -124,6 +126,11 @@ def main():
     else:
         st.sidebar.write("⬜ 상품 분석 대기 중")
 
+    if get_state(DELIVERY_RESULT) is not None:
+        st.sidebar.write("✅ 배송/운영 분석 완료")
+    else:
+        st.sidebar.write("⬜ 배송/운영 분석 대기 중")
+
     # 페이지 렌더링
     if page == "데이터 업로드":
         render_upload_page()
@@ -143,6 +150,8 @@ def main():
         render_rfm_page()
     elif page == "상품":
         render_product_page()
+    elif page == "배송/운영":
+        render_delivery_page()
 
 
 if __name__ == "__main__":

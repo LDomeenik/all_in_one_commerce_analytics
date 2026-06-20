@@ -331,6 +331,8 @@ def _render_category_result():
     
     st.plotly_chart(fig, use_container_width=True)
 
+    st.divider()
+
     # 카테고리별 매출 비율 차트
     st.write("#### 카테고리별 매출 비율")
 
@@ -344,6 +346,8 @@ def _render_category_result():
     fig.update_layout(showlegend=True)
 
     st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
 
     # 카테고리별 판매량 차트
     if "total_quantity" in category_summary.columns:
@@ -366,6 +370,8 @@ def _render_category_result():
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
+        st.divider()
 
     # 카테고리 요약 테이블
     st.write("#### 카테고리 요약")

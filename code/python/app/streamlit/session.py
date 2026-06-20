@@ -30,6 +30,7 @@ COHORT_RESULT = "cohort_result"
 RFM_RESULT = "rfm_result"
 PRODUCT_RESULT = "product_result"
 CATEGORY_RESULT = "category_result"
+DELIVERY_RESULT = "delivery_result"
 
 
 # init_session: session_state 초기화
@@ -64,7 +65,8 @@ def init_session():
         COHORT_RESULT: None,
         RFM_RESULT: None,
         PRODUCT_RESULT: None,
-        CATEGORY_RESULT: None
+        CATEGORY_RESULT: None,
+        DELIVERY_RESULT: None
     }
 
     for key, value in defaults.items():

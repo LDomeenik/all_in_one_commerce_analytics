@@ -117,7 +117,7 @@ def _render_rfm_result():
         segment_summary,
         x="segment",
         y="customer_count",
-        title="세그먼트별 고객 수",
+        # title="세그먼트별 고객 수",
         labels={"segment":"", "customer_count":""},
         color_discrete_sequence=[CHART_COLORS["customer"]]
     )
@@ -138,7 +138,7 @@ def _render_rfm_result():
         segment_summary,
         x="segment",
         y="total_monetary",
-        title="세그먼트별 매출 비중",
+        # title="세그먼트별 매출 비중",
         labels={"segment":"", "total_monetary":""},
         color_discrete_sequence=[CHART_COLORS["revenue"]]
     )

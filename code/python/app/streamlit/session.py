@@ -28,6 +28,7 @@ EDA_RESULT = "eda_result"
 KPI_RESULT = "kpi_result"
 COHORT_RESULT = "cohort_result"
 RFM_RESULT = "rfm_result"
+PRODUCT_RESULT = "product_result"
 
 
 # init_session: session_state 초기화
@@ -60,7 +61,8 @@ def init_session():
         EDA_RESULT: None,
         KPI_RESULT: None,
         COHORT_RESULT: None,
-        RFM_RESULT: None
+        RFM_RESULT: None,
+        PRODUCT_RESULT: None
     }
 
     for key, value in defaults.items():

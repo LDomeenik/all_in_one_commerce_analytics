@@ -156,12 +156,12 @@ def _diagnose_module(df: pd.DataFrame, module: str) -> dict:
 
 
 # diagnose: 전체 분석 모듈 진단 실행
-def diagnose(df: pd.DataFrame) -> dict:
+def diagnose(tables: dict) -> dict:
     """
     전처리 완료 DataFrame을 기반으로 전체 분석 모듈의 실행 가능 여부를 진단합니다.
 
     Args:
-        df (pd.DataFrame): 전처리 완료 DataFrame
+        tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
     
     Returns:
         dict: 전체 분석 모듈 진단 결과
@@ -176,24 +176,25 @@ def diagnose(df: pd.DataFrame) -> dict:
             }
     
     Raises:
-        ValueError: 입력 DataFrame이 비어 있는 경우
+        ValueError: 입력 tables가 비어 있는 경우
     """
 
-    if df is None or df.empty:
+    if not tables:
         raise ValueError("진단할 데이터가 없습니다.")
     
-    # Flag 컬럼 제외한 실제 데이터 컬럼만 사용
-    data_columns = [
-        col for col in df.columns
-        if not col.startswith("is_")
-    ]
+    # 모든 테이블에 존재하는 컬럼 목록 합집합
+    all_columns = set()
+    for df in tables.values():
+        all_columns.update(
+            col for col in df.columns
+            if not col.startswith("is_")
+        )
 
-    data_df = df[data_columns]
+    # 빈 df에 컬럼만 설정해서 _diagnose_module에 전달
+    dummy_df = pd.DataFrame(columns=list(all_columns))
 
-    # 전체 모듈 진단
     diagnosis_result = {}
-
     for module in ANALYSIS_MODULES.keys():
-        diagnosis_result[module] = _diagnose_module(data_df, module)
-    
+        diagnosis_result[module] = _diagnose_module(dummy_df, module)
+
     return diagnosis_result

@@ -13,8 +13,6 @@ EDA 분석 UI 페이지 모듈
 """
 
 
-from re import M
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -23,7 +21,8 @@ from core.analytics.eda import run_eda
 from app.streamlit.session import (
     get_state,
     set_state,
-    PREPROCESSED_DF,
+    COLUMN_REGISTRY,
+    PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
     EDA_RESULT
 )
@@ -47,10 +46,13 @@ def render_eda_page():
 
     st.subheader("EDA (탐색적 데이터 분석)")
 
-    # 전처리 완료 여부 확인
-    preprocessed_df = get_state(PREPROCESSED_DF)
+    # column_registry 가져오기
+    column_registry = get_state(COLUMN_REGISTRY)
 
-    if preprocessed_df is None:
+    # 전처리 완료 여부 확인
+    preprocessed_tables = get_state(PREPROCESSED_TABLES)
+
+    if preprocessed_tables is None:
         st.warning("먼저 전처리를 완료해주세요.")
         return
 
@@ -65,18 +67,19 @@ def render_eda_page():
     # EDA 결과가 없으면 실행
     # 있으면 바로 결과 출력
     if get_state(EDA_RESULT) is None:
-        _run_eda(preprocessed_df)
+        _run_eda(preprocessed_tables, column_registry)
     else:
         _render_eda_result()
 
 
 # _run_eda: EDA 분석 실행 내장 함수
-def _run_eda(preprocessed_df):
+def _run_eda(preprocessed_tables, column_registry):
     """
     EDA 분석을 실행하고 결과를 session_state 에 저장합니다.
 
     Args:
-        preprocessed_df (pd.DataFrame): 전처리 완료 DataFrame
+        preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
 
     Returns:
         없음
@@ -88,7 +91,7 @@ def _run_eda(preprocessed_df):
     # run_eda 실행 및 결과 저장
     with st.spinner("EDA 분석 중..."):
         try:
-            eda_result = run_eda(preprocessed_df)
+            eda_result = run_eda(preprocessed_tables, column_registry)
             set_state(EDA_RESULT, eda_result)
             st.rerun()
 
@@ -114,21 +117,24 @@ def _render_eda_result():
     # session_state 에서 EDA 결과 로드
     eda_result = get_state(EDA_RESULT)
 
-    # 기초 통계 출력
-    # _render_basic_stats 호출
-    _render_basic_stats(eda_result["basic_stats"])
-    st.divider()
+    for table_type, table_result in eda_result.items():
+        st.subheader(f"{table_type} 테이블")
+        
+        # 기초 통계 출력
+        # _render_basic_stats 호출
+        _render_basic_stats(table_result["basic_stats"])
+        st.divider()
 
-    # 시계열 분포 차트 출력
-    _render_time_series(eda_result["time_series"])
-    st.divider()
+        # 시계열 분포 차트 출력
+        _render_time_series(table_result["time_series"])
+        st.divider()
 
-    # 주요 컬럼 분포 차트 출력
-    _render_distribution(eda_result["distribution"])
-    st.divider()
+        # 주요 컬럼 분포 차트 출력
+        _render_distribution(table_result["distribution"])
+        st.divider()
 
-    # 수치형 / 문자열 컬럼 통계 출력
-    _render_column_stats(eda_result["numeric_stats"], eda_result["categorical_stats"])
+        # 수치형 / 문자열 컬럼 통계 출력
+        _render_column_stats(table_result["numeric_stats"], table_result["categorical_stats"])
 
     # 재실행 버튼
     if st.button("재실행"):

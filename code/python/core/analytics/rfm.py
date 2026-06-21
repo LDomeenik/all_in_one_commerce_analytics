@@ -12,6 +12,8 @@ RFM 분석 모듈
 
 import pandas as pd
 
+from core.analytics.table_selector import get_dataframe_with_columns
+
 
 # _calculate_rfm: 고객별 RFM 값 계산
 def _calculate_rfm(df: pd.DataFrame) -> pd.DataFrame:
@@ -73,14 +75,29 @@ def _score_rfm(rfm_df: pd.DataFrame) -> pd.DataFrame:
 
     result_df = rfm_df.copy()
 
+    # 고유값이 q보다 적을 경우 분위수를 자동 조정하는 내부 함수
+    def safe_qcut(series, q, labels):
+
+        n_unique = series.nunique()
+        
+        if n_unique < 2:
+            mid = labels[len(labels) // 2]
+
+            return pd.Series([mid] * len(series), index=series.index)
+
+        actual_q = min(n_unique, q)
+        actual_labels = labels[:actual_q]
+        
+        return pd.qcut(series, q=actual_q, labels=actual_labels, duplicates="drop")
+
     # r_score: recency가 낮을수록(최근일수록) 높은 점수
-    result_df["r_score"] = pd.qcut(result_df["recency"], q=5, labels=[5, 4, 3, 2, 1], duplicates="drop")
+    result_df["r_score"] = safe_qcut(result_df["recency"], 5, [5, 4, 3, 2, 1])
 
     # f_score: frequency가 높을수록 높은 점수
-    result_df["f_score"] = pd.qcut(result_df["frequency"], q=5, labels=[1, 2, 3, 4, 5], duplicates="drop")
+    result_df["f_score"] = safe_qcut(result_df["frequency"], 5, [1, 2, 3, 4, 5])
 
     # m_score: monetary가 높을수록 높은 점수
-    result_df["m_score"] = pd.qcut(result_df["monetary"], q=5, labels=[1, 2, 3, 4, 5], duplicates="drop")
+    result_df["m_score"] = safe_qcut(result_df["monetary"],  5, [1, 2, 3, 4, 5])
 
     # 결과 반환
     return result_df
@@ -186,12 +203,13 @@ def _get_segment_summary(rfm_df: pd.DataFrame) -> pd.DataFrame:
 
 
 # run_rfm: RFM 분석 실행
-def run_rfm(df: pd.DataFrame) -> dict:
+def run_rfm(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) -> dict:
     """
     RFM 분석을 실행합니다.
 
     Args:
-        df (pd.DataFrame): 전처리 완료 DataFrame
+        tables (dict[str, pd.DataFrame]): 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
     
     Returns:
         dict: RFM 분석 결과
@@ -199,8 +217,16 @@ def run_rfm(df: pd.DataFrame) -> dict:
             - segment_summary (pd.DataFrame): 세그먼트별 요약 통계
     
     Raises:
-        ValueError: 입력 DataFrame이 비어 있는 경우
+        ValueError: 입력 DataFrame 이 비어 있는 경우
     """
+
+    # 필요한 컬럼을 가진 테이블 자동 선택
+    df = get_dataframe_with_columns(
+        tables,
+        column_registry,
+        required=["customer_id", "order_date", "order_id", "revenue"],
+        agg={"revenue":"sum"}
+    )
 
     # 입력 DataFrame 검증
     if df is None or df.empty:
@@ -229,7 +255,7 @@ def run_rfm(df: pd.DataFrame) -> dict:
     # 세그먼트 분류
     rfm_df = _assign_segment(rfm_df)
 
-    # 세그먼트 요약 집걔
+    # 세그먼트 요약 집계
     summary_df = _get_segment_summary(rfm_df)
 
     # 결과 반환

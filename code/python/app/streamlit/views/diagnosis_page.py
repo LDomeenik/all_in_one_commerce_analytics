@@ -18,7 +18,7 @@ from core.diagnostics.diagnosis import diagnose, ANALYSIS_MODULES
 from app.streamlit.session import (
     get_state,
     set_state,
-    PREPROCESSED_DF,
+    PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT
 )
 
@@ -41,9 +41,9 @@ def render_diagnosis_page():
     st.subheader("4단계. 분석 가능 여부 진단")
 
     # 전처리 완료 여부 확인
-    preprocessed_df = get_state(PREPROCESSED_DF)
+    preprocessed_tables = get_state(PREPROCESSED_TABLES)
 
-    if preprocessed_df is None:
+    if preprocessed_tables is None:
         st.warning("먼저 전처리를 완료해주세요.")
         return
     
@@ -51,7 +51,7 @@ def render_diagnosis_page():
     if get_state(DIAGNOSIS_RESULT) is None:
         with st.spinner("진단 중..."):
             try:
-                diagnosis_result = diagnose(preprocessed_df)
+                diagnosis_result = diagnose(preprocessed_tables)
                 set_state(DIAGNOSIS_RESULT, diagnosis_result)
                 st.rerun()
             except ValueError as e:

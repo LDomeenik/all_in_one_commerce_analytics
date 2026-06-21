@@ -22,13 +22,14 @@ from core.loader.config_loader import get_columns_required_for
 # _add_missing_flags: 필수 컬럼 결측 여부 Flag 생성
 def _add_missing_flags(df: pd.DataFrame) -> pd.DataFrame:
     """
-    분석 모듈별 필수 컬럼의 결측 여부 Flag 를 생성합니다.
+    분석 모듈별 필수 컬럼의 결측 여부 Flag를 생성합니다.
+    컬럼이 존재하는 경우에만 Flag를 생성합니다.
 
     Args:
         df (pd.DataFrame): Staging DataFrame
 
     Returns:
-        pd.DataFrame: 결측 Flag 가 추가된 DataFrame
+        pd.DataFrame: 결측 Flag가 추가된 DataFrame
 
     Raises:
         없음
@@ -43,13 +44,11 @@ def _add_missing_flags(df: pd.DataFrame) -> pd.DataFrame:
     for module in modules:
         required_columns.update(get_columns_required_for(module))
 
-    # 필수 컬럼 결측 Flag 생성
+    # 컬럼이 존재하는 경우에만 결측 Flag 생성
     for column in required_columns:
         if column in result_df.columns:
             result_df[f"is_missing_{column}"] = result_df[column].isna()
-        else:
-            # 컬럼 자체가 없는 경우 전체 True
-            result_df[f"is_missing_{column}"] = True
+        # 컬럼이 없으면 flag 생성 안 함
 
     return result_df
 
@@ -259,6 +258,18 @@ def _add_derived_columns(df: pd.DataFrame) -> pd.DataFrame:
         result_df["item_revenue"] = (
             result_df["unit_price"] * result_df["quantity"]
         )
+    
+    # revenue 생성
+    if "revenue" not in result_df.columns:
+        if (
+            "item_revenue" in result_df.columns
+            and "shipping_fee" in result_df.columns
+        ):
+            result_df["revenue"] = (
+                result_df["item_revenue"] + result_df["shipping_fee"]
+            )
+        elif "item_revenue" in result_df.columns:
+            result_df["revenue"] = result_df["item_revenue"]
 
     return result_df
 

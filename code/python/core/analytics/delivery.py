@@ -12,6 +12,8 @@ delivery.py
 
 import pandas as pd
 
+from core.analytics.table_selector import get_dataframe_with_columns
+
 
 # _get_delivery_stats: 핵심 배송 지표 계산
 def _get_delivery_stats(df: pd.DataFrame) -> dict:
@@ -203,12 +205,13 @@ def _get_monthly_delivery(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # run_delivery: 배송/운영 분석 실행
-def run_delivery(df: pd.DataFrame) -> dict:
+def run_delivery(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) -> dict:
     """
     배송/운영 분석을 실행합니다.
 
     Args:
-        df (pd.DataFrame): 전처리 완료 DataFrame
+        tables (dict[str, pd.DataFrame]): 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
     
     Returns:
         dict: 배송/운영 분석 결과
@@ -218,9 +221,20 @@ def run_delivery(df: pd.DataFrame) -> dict:
     
     Raises:
         ValueError: 입력 DataFrame이 비어 있는 경우
+        ValueError: 분석에 필요한 컬럼이 없는 경우
     """
 
-    # 입력 DataFrame 검증
+    # 필요한 컬럼을 가진 테이블 자동 선택
+    df = get_dataframe_with_columns(
+        tables,
+        column_registry,
+        required=[
+            "order_id", "order_date", "delivered_date",
+            "shipped_date", "estimated_delivery_date", "delivery_days", "order_status"
+        ]
+    )
+
+    # order 테이블 검증
     if df is None or df.empty:
         raise ValueError("분석할 데이터가 없습니다.")
     

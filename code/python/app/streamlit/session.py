@@ -14,16 +14,29 @@ import streamlit as st
 
 
 # session_state 키 상수 정의
-RAW_DF = "raw_df"
+# 파일 입력
+UPLOADED_FILES = "uploaded_files"
 FILE_METADATA = "file_metadata"
+
+# 테이블 분류
+TABLES = "tables"
+TABLE_TYPES = "table_types"
+
+# 매핑
 MAPPING_RESULT = "mapping_result"
 CONFIRMED_MAPPING = "confirmed_mapping"
-STAGING_DF = "staging_df"
 RENAME_DICT = "rename_dict"
 UNMAPPED_COLUMNS = "unmapped_columns"
-PREPROCESSED_DF = "preprocessed_df"
+
+# 전처리
+PREPROCESSED_TABLES = "preprocessed_tables"
 PREPROCESSING_SUMMARY = "preprocessing_summary"
+COLUMN_REGISTRY = "column_registry"
+
+# 진단
 DIAGNOSIS_RESULT = "diagnosis_result"
+
+# 분석 결과
 EDA_RESULT = "eda_result"
 KPI_RESULT = "kpi_result"
 COHORT_RESULT = "cohort_result"
@@ -40,25 +53,27 @@ def init_session():
 
     Args:
         없음
-    
+
     Returns:
         없음
-    
+
     Raises:
         없음
     """
 
     # session_state 초기화
     defaults = {
-        RAW_DF: None,
+        UPLOADED_FILES: {},
+        TABLES: {},
+        TABLE_TYPES: {},
         FILE_METADATA: None,
         MAPPING_RESULT: None,
         CONFIRMED_MAPPING: None,
-        STAGING_DF: None,
         RENAME_DICT: None,
         UNMAPPED_COLUMNS: [],
-        PREPROCESSED_DF: None,
+        PREPROCESSED_TABLES: None,
         PREPROCESSING_SUMMARY: None,
+        COLUMN_REGISTRY: {},
         DIAGNOSIS_RESULT: None,
         EDA_RESULT: None,
         KPI_RESULT: None,
@@ -74,7 +89,7 @@ def init_session():
             st.session_state[key] = value
 
 
-# set_State: session_state에 값 저장
+# set_state: session_state에 값 저장
 def set_state(key: str, value):
     """
     session_state에 값을 저장합니다.
@@ -82,10 +97,10 @@ def set_state(key: str, value):
     Args:
         key (str): session_state 키
         value: 저장할 값
-    
+
     Returns:
         없음
-    
+
     Raises:
         없음
     """
@@ -100,10 +115,10 @@ def get_state(key: str):
 
     Args:
         key (str): session_state 키
-    
+
     Returns:
         저장된 값 또는 None
-    
+
     Raises:
         없음
     """

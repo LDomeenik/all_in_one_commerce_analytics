@@ -228,57 +228,50 @@ def _get_distribution(df: pd.DataFrame) -> dict:
 
 
 # run_eda: EDA 분석 실행
-def run_eda(df: pd.DataFrame) -> dict:
+def run_eda(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) -> dict:
     """
     EDA 분석을 실행합니다.
 
     Args:
-        df (pd.DataFrame): 전처리 완료 DataFrame
+        tables (dict[str, pd.DataFrame]): 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
 
     Returns:
-        dict: EDA 분석 결과
-            - basic_stats (dict): 기초 통계
-            - numeric_stats (dict): 수치형 컬럼 통계
-            - categorical_stats (dict): 문자열 컬럼 통계
-            - time_series (pd.DataFrame): 시계열 분포
-            - distribution (dict): 주요 컬럼 분포
+        dict: {테이블 유형: EDA 결과} 딕셔너리
+            각 테이블별:
+                - basic_stats (dict): 기초 통계
+                - numeric_stats (dict): 수치형 컬럼 통계
+                - categorical_stats (dict): 문자열 컬럼 통계
+                - time_series (pd.DataFrame): 시계열 분포
+                - distribution (dict): 주요 컬럼 분포
 
     Raises:
         ValueError: 입력 DataFrame 이 비어 있는 경우
     """
 
-    # 입력 DataFrame 검증
-    if df is None or df.empty:
+    # 입력 table 검증
+    if not tables:
         raise ValueError("분석할 데이터가 없습니다.")
 
-    # Flag 컬럼 제외한 데이터 컬럼만 사용
-    data_cols = [
-        col for col in df.columns
-        if not col.startswith("is_")
-    ]
+    result = {}
 
-    data_df = df[data_cols]
+    # 각 테이블별로 EDA 실행
+    for table_type, df in tables.items():
+        # Flag 컬럼 제외한 데이터 컬럼만 사용
+        data_cols = [
+            col for col in df.columns
+            if not col.startswith("is_")
+        ]
 
-    # 기초 통계 분석 실행
-    basic_stats = _get_basic_stats(data_df)
+        data_df = df[data_cols]
+        
+        # 각 테이블별로 집계
+        result[table_type] = {
+            "basic_stats": _get_basic_stats(data_df),
+            "numeric_stats": _get_numeric_stats(data_df),
+            "categorical_stats": _get_categorical_stats(data_df),
+            "time_series": _get_time_series(data_df),
+            "distribution": _get_distribution(data_df)
+        }
 
-    # 수치형 컬럼 통계 실행
-    numeric_stats = _get_numeric_stats(data_df)
-
-    # 문자열 컬럼 통계 실행
-    categorical_stats = _get_categorical_stats(data_df)
-
-    # 시계열 분포 분석 실행
-    time_series = _get_time_series(data_df)
-
-    # 주요 컬럼 분포 분석 실행
-    distribution = _get_distribution(data_df)
-
-    # 결과 반환
-    return {
-        "basic_stats" : basic_stats,
-        "numeric_stats" : numeric_stats,
-        "categorical_stats" : categorical_stats,
-        "time_series" : time_series,
-        "distribution" : distribution
-    }
+    return result

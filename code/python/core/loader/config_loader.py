@@ -173,3 +173,27 @@ def get_standard_column_list() -> list:
 
     # 표준 컬럼 목록 반환
     return [None] + list(standard_columns.keys())
+
+
+# get_columns_by_grain: 특정 grain에 해당하는 표준 컬럼 목록 반환
+def get_columns_by_grain(grain: str) -> list:
+    """
+    특정 grain에 해당하는 표준 컬럼 목록을 반환합니다.
+
+    Args:
+        grain (str): 조회할 grain
+            "order" / "order_item" / "customer" / "product"
+            "payment" / "logistics" / "derived"
+    
+    Returns:
+        list: 해당 grain의 표준 컬럼 목록
+    
+    Raises:
+        없음
+    """
+
+    standard_columns = load_standard_columns()
+    return [
+        col for col, info in standard_columns.items()
+        if info["grain"] == grain
+    ]

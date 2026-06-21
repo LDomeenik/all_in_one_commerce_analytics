@@ -21,7 +21,8 @@ from core.analytics.category import run_category
 from app.streamlit.session import (
     get_state,
     set_state,
-    PREPROCESSED_DF,
+    COLUMN_REGISTRY,
+    PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
     PRODUCT_RESULT,
     CATEGORY_RESULT
@@ -46,10 +47,13 @@ def render_product_page():
 
     st.subheader("상품 분석")
 
-    # 전처리 완료 여부 확인
-    preprocessed_df = get_state(PREPROCESSED_DF)
+    # column_registry 가져오기
+    column_registry = get_state(COLUMN_REGISTRY)
 
-    if preprocessed_df is None:
+    # 전처리 완료 여부 확인
+    preprocessed_tables = get_state(PREPROCESSED_TABLES)
+
+    if preprocessed_tables is None:
         st.warning("먼저 전처리를 완료해주세요.")
         return
 
@@ -65,20 +69,21 @@ def render_product_page():
     tab1, tab2 = st.tabs(["🛍️ 상품별 분석", "📂 카테고리별 분석"])
 
     with tab1:
-        _render_product_tab(preprocessed_df, diagnosis_result)
+        _render_product_tab(preprocessed_tables, diagnosis_result, column_registry)
 
     with tab2:
-        _render_category_tab(preprocessed_df, diagnosis_result)
+        _render_category_tab(preprocessed_tables, diagnosis_result, column_registry)
 
 
 # _render_product_tab: 상품별 분석 탭 렌더링
-def _render_product_tab(preprocessed_df, diagnosis_result):
+def _render_product_tab(preprocessed_tables, diagnosis_result, column_registry):
     """
     상품별 분석 탭을 렌더링합니다.
 
     Args:
-        preprocessed_df (pd.DataFrame): 전처리 완료 DataFrame
+        preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
         diagnosis_result (dict): 진단 결과
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
 
     Returns:
         없음
@@ -88,19 +93,20 @@ def _render_product_tab(preprocessed_df, diagnosis_result):
     """
 
     if get_state(PRODUCT_RESULT) is None:
-        _run_product(preprocessed_df)
+        _run_product(preprocessed_tables, column_registry)
     else:
         _render_product_result()
 
 
 # _render_category_tab: 카테고리별 분석 탭 렌더링
-def _render_category_tab(preprocessed_df, diagnosis_result):
+def _render_category_tab(preprocessed_tables, diagnosis_result, column_registry):
     """
     카테고리별 분석 탭을 렌더링합니다.
 
     Args:
-        preprocessed_df (pd.DataFrame): 전처리 완료 DataFrame
+        preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
         diagnosis_result (dict): 진단 결과
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
 
     Returns:
         없음
@@ -116,18 +122,19 @@ def _render_category_tab(preprocessed_df, diagnosis_result):
         return
 
     if get_state(CATEGORY_RESULT) is None:
-        _run_category(preprocessed_df)
+        _run_category(preprocessed_tables, column_registry)
     else:
         _render_category_result()
 
 
 # _run_product: 상품 분석 실행
-def _run_product(preprocessed_df):
+def _run_product(preprocessed_tables, column_registry):
     """
     상품 분석을 실행하고 결과를 session_state 에 저장합니다.
 
     Args:
-        preprocessed_df (pd.DataFrame): 전처리 완료 DataFrame
+        preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
 
     Returns:
         없음
@@ -138,7 +145,7 @@ def _run_product(preprocessed_df):
 
     with st.spinner("상품 분석 중..."):
         try:
-            product_result = run_product(preprocessed_df)
+            product_result = run_product(preprocessed_tables, column_registry)
             set_state(PRODUCT_RESULT, product_result)
             st.rerun()
         except ValueError as e:
@@ -146,12 +153,13 @@ def _run_product(preprocessed_df):
 
 
 # _run_category: 카테고리 분석 실행
-def _run_category(preprocessed_df):
+def _run_category(preprocessed_tables, column_registry):
     """
     카테고리 분석을 실행하고 결과를 session_state 에 저장합니다.
 
     Args:
-        preprocessed_df (pd.DataFrame): 전처리 완료 DataFrame
+        preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
 
     Returns:
         없음
@@ -162,7 +170,7 @@ def _run_category(preprocessed_df):
 
     with st.spinner("카테고리 분석 중..."):
         try:
-            category_result = run_category(preprocessed_df)
+            category_result = run_category(preprocessed_tables, column_registry)
             set_state(CATEGORY_RESULT, category_result)
             st.rerun()
         except ValueError as e:

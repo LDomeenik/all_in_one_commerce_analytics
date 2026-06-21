@@ -15,10 +15,10 @@ import streamlit as st
 
 from app.streamlit.session import (
     init_session, 
-    get_state, 
-    RAW_DF, 
-    STAGING_DF, 
-    PREPROCESSED_DF, 
+    get_state,
+    TABLES,
+    CONFIRMED_MAPPING,
+    PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
     EDA_RESULT,
     KPI_RESULT,
@@ -81,17 +81,17 @@ def main():
     # 진행 상태 표시
     st.sidebar.write("#### 진행 상태")
 
-    if get_state(RAW_DF) is not None:
+    if get_state(TABLES) is not None:
         st.sidebar.write("✅ 데이터 업로드 완료")
     else:
         st.sidebar.write("⬜ 데이터 업로드 대기 중")
 
-    if get_state(STAGING_DF) is not None:
+    if get_state(CONFIRMED_MAPPING) is not None:
         st.sidebar.write("✅ 컬럼 매핑 완료")
     else:
         st.sidebar.write("⬜ 컬럼 매핑 대기 중")
 
-    if get_state(PREPROCESSED_DF) is not None:
+    if get_state(PREPROCESSED_TABLES) is not None:
         st.sidebar.write("✅ 전처리 완료")
     else:
         st.sidebar.write("⬜ 전처리 대기 중")

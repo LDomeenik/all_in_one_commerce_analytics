@@ -222,7 +222,13 @@ def apply_mapping(
         raise ValueError(f"중복 매핑이 존재합니다. 확인 후 다시 시도해주세요: {duplicate_mappings}")
 
     # Staging DataFrame 생성
-    staging_df = df.rename(columns=rename_dict)
-    staging_df = staging_df[list(rename_dict.values())]
+    staging_df = df.copy()
+    staging_df = staging_df.drop(columns=unmapped_columns, errors="ignore")
+    staging_df = staging_df.rename(columns=rename_dict)
+    existing_standard_cols = [
+        col for col in rename_dict.values()
+        if col in staging_df.columns
+    ]
+    staging_df = staging_df[existing_standard_cols]
 
     return staging_df, rename_dict, unmapped_columns

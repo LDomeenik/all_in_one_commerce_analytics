@@ -10,6 +10,8 @@ category.py
 
 import pandas as pd
 
+from core.analytics.table_selector import get_dataframe_with_columns
+
 
 # _get_category_summary: 카테고리별 요약 집계
 def _get_category_summary(df: pd.DataFrame) -> pd.DataFrame:
@@ -70,12 +72,13 @@ def _get_category_summary(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # run_category: 카테고리 분석 실행
-def run_category(df: pd.DataFrame) -> dict:
+def run_category(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) -> dict:
     """
     카테고리 분석을 실행합니다.
 
     Args:
-        df (pd.DataFrame): 전처리 완료 DataFrame
+        tables (dict[str, pd.DataFrame]): 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
     
     Returns:
         dict: 카테고리 분석 결과
@@ -84,6 +87,14 @@ def run_category(df: pd.DataFrame) -> dict:
     Raises:
         ValueError: 입력 DataFrame이 비어 있는 경우
     """
+
+    # 필요한 컬럼을 가진 테이블 자동 선택
+    df = get_dataframe_with_columns(
+        tables,
+        column_registry,
+        required=["product_category", "item_revenue", "order_id"],
+        agg={"item_revenue":"sum"}
+    )
 
     # 입력 DataFrame 검증
     if df is None or df.empty:

@@ -20,10 +20,9 @@ from core.loader.config_loader import get_standard_column_list
 from app.streamlit.session import (
     get_state,
     set_state,
-    RAW_DF,
+    TABLES,
     MAPPING_RESULT,
     CONFIRMED_MAPPING,
-    STAGING_DF,
     RENAME_DICT,
     UNMAPPED_COLUMNS
 )
@@ -102,16 +101,17 @@ def render_mapping_page():
     st.subheader("2단계. 컬럼 매핑")
 
     # 업로드된 파일 확인
-    raw_df = get_state(RAW_DF)
+    tables = get_state(TABLES)
 
-    if raw_df is None:
+    if not tables:
         st.warning("먼저 데이터를 업로드해주세요.")
         return
 
-    # 자동 매핑 실행
-    # 이미 매핑 결과가 있으면 재실행하지 않음
+    # 테이블별 독립 매핑 실행
     if get_state(MAPPING_RESULT) is None:
-        mapping_result = map_columns(list(raw_df.columns))
+        mapping_result = {}
+        for table_type, df in tables.items():
+            mapping_result[table_type] = map_columns(list(df.columns))
         set_state(MAPPING_RESULT, mapping_result)
     else:
         mapping_result = get_state(MAPPING_RESULT)
@@ -125,7 +125,7 @@ def render_mapping_page():
     _render_human_review(mapping_result)
 
     # 확정 완료 후 결과 표시
-    if get_state(STAGING_DF) is not None:
+    if get_state(CONFIRMED_MAPPING) is not None:
         st.divider()
         _render_staging_preview()
 
@@ -145,7 +145,14 @@ def _render_mapping_summary(mapping_result: dict):
         없음
     """
 
-    mapping_df = _build_mapping_df(mapping_result)
+    # 전체 집계
+    all_rows = []
+    for table_type, table_mapping in mapping_result.items():
+        df = _build_mapping_df(table_mapping)
+        df["테이블"] = table_type
+        all_rows.append(df)
+
+    mapping_df = pd.concat(all_rows, ignore_index=True)
 
     # 상태별 집계
     total = len(mapping_df)
@@ -197,35 +204,40 @@ def _render_human_review(mapping_result: dict):
     # 사용자 선택 결과 저장용 딕셔너리
     user_selections = {}
 
-    for source_column, info in mapping_result.items():
-        mapped_to = info["mapped_to"]
-        confidence = info["confidence"]
-        status = _get_review_status(confidence, mapped_to)
+    for table_type, table_mapping in mapping_result.items():
+        st.write(f"**{table_type} 테이블**")
 
-        # 기본 선택값 설정
-        if mapped_to in standard_column_list:
-            default_index = standard_column_list.index(mapped_to)
-        else:
-            default_index = 0
+        for source_column, info in table_mapping.items():
+            mapped_to = info["mapped_to"]
+            confidence = info["confidence"]
+            status = _get_review_status(confidence, mapped_to)
 
-        # 검수 상태에 따른 레이블 색상 표시
-        if status == "미매핑":
-            label = f"🔴 {source_column}"
-        elif status == "검수 필요":
-            label = f"🟡 {source_column}"
-        elif status == "확인 필요":
-            label = f"🟢 {source_column}"
-        else:
-            label = f"✅ {source_column}"
+            # 기본 선택값 설정
+            if mapped_to in standard_column_list:
+                default_index = standard_column_list.index(mapped_to)
+            else:
+                default_index = 0
 
-        selected = st.selectbox(
-            label=label,
-            options=standard_column_list,
-            index=default_index,
-            key=f"mapping_select_{source_column}"
-        )
+            # 검수 상태에 따른 레이블 색상 표시
+            if status == "미매핑":
+                label = f"🔴 {source_column}"
+            elif status == "검수 필요":
+                label = f"🟡 {source_column}"
+            elif status == "확인 필요":
+                label = f"🟢 {source_column}"
+            else:
+                label = f"✅ {source_column}"
 
-        user_selections[source_column] = selected
+            selected = st.selectbox(
+                label=label,
+                options=standard_column_list,
+                index=default_index,
+                key=f"mapping_select_{table_type}_{source_column}"
+            )
+
+            user_selections[f"{table_type}_{source_column}"] = selected
+    
+        st.divider()
 
     # 최종 매핑 확정 버튼
     if st.button("최종 매핑 확정", type="primary"):
@@ -248,27 +260,43 @@ def _confirm_and_apply(mapping_result: dict, user_selections: dict):
         없음
     """
 
-    # 사용자 확정 결과 반영
-    confirmed_mapping = confirm_mapping(mapping_result, user_selections)
-    set_state(CONFIRMED_MAPPING, confirmed_mapping)
-
     try:
-        raw_df = get_state(RAW_DF)
+        tables = get_state(TABLES)
 
-        staging_df, rename_dict, unmapped_columns = apply_mapping(
-            df=raw_df,
-            confirmed_mapping=confirmed_mapping
-        )
+        # 각 테이블에 매핑 적용
+        mapped_tables = {}
+        all_unmapped = []
+        confirmed_mapping_all = {}
 
-        set_state(STAGING_DF, staging_df)
+        for table_type, df in tables.items():
+            table_mapping = mapping_result[table_type]
+
+            # 이 테이블의 user_selections 추출
+            table_selections = {
+                col: user_selections[f"{table_type}_{col}"]
+                for col in table_mapping.keys()
+            }
+
+            # 확정 매핑 생성
+            confirmed = confirm_mapping(table_mapping, table_selections)
+            confirmed_mapping_all[table_type] = confirmed
+
+            # 매핑 적용
+            mapped_df, rename_dict, unmapped_columns = apply_mapping(df, confirmed)
+            mapped_tables[table_type] = mapped_df
+            all_unmapped.extend(unmapped_columns)
+
+        set_state(CONFIRMED_MAPPING, confirmed_mapping_all)
+        set_state(TABLES, mapped_tables)
         set_state(RENAME_DICT, rename_dict)
-        set_state(UNMAPPED_COLUMNS, unmapped_columns)
+        set_state(UNMAPPED_COLUMNS, all_unmapped)
 
         # 강제 재실행으로 사이드바 상태 즉시 업데이트
         st.rerun()
 
     except ValueError as e:
         st.error(f"매핑 적용 중 오류가 발생했습니다: {e}")
+        st.info("💡 같은 표준 컬럼으로 매핑된 원본 컬럼이 있습니다. 위 매핑 선택에서 하나를 'None'으로 변경해주세요.")
 
 
 # _render_staging_preview: Staging 데이터 미리보기 출력 내장 함수
@@ -286,17 +314,21 @@ def _render_staging_preview():
         없음
     """
 
-    staging_df = get_state(STAGING_DF)
+    tables = get_state(TABLES)
     unmapped_columns = get_state(UNMAPPED_COLUMNS)
 
     st.subheader("3단계 준비 완료")
     st.success("최종 매핑이 확정되었습니다.")
 
+    # 미매핑 컬럼 경고
     if unmapped_columns:
         st.warning(
             f"미매핑 컬럼 {len(unmapped_columns)}개가 "
             f"Staging에서 제외됩니다: {unmapped_columns}"
         )
 
+    # 각 테이블별 미리보기 출력
     st.write("#### Staging 데이터 미리보기")
-    st.dataframe(staging_df.head(20), use_container_width=True)
+    for table_type, df in tables.items():
+        st.write(f"**{table_type} 테이블**")
+        st.dataframe(df.head(20), use_container_width=True)

@@ -45,6 +45,8 @@
     "transaction_date",
     "created_at",
     "createdat",
+    "order_purchase_timestamp",
+    "purchase_timestamp",
     "주문일자",
     "주문일",
     "주문날짜"
@@ -82,11 +84,31 @@
     "구매자명"
   ],
 
+  "customer_city": [
+    "customer_city",
+    "customercity",
+    "city",
+    "고객도시",
+    "도시"
+  ],
+
+  "customer_state": [
+    "customer_state",
+    "customerstate",
+    "state",
+    "province",
+    "region",
+    "고객지역",
+    "지역"
+  ],
+
   "product_id": [
     "product_id",
     "productid",
     "sku",
     "sku_id",
+    "item_id",
+    "itemid",
     "goods_id",
     "상품id",
     "상품번호"
@@ -112,6 +134,7 @@
     "categoryname",
     "goods_category",
     "goodscategory",
+    "product_category_name",
     "상품카테고리",
     "카테고리"
   ],
@@ -177,14 +200,14 @@
   "item_revenue": [
     "item_revenue",
     "itemrevenue",
+    "line_revenue",
+    "linerevenue",
     "item_amount",
     "itemamount",
-    "item_total",
-    "itemtotal",
     "line_amount",
     "lineamount",
-    "상품금액",
-    "상품매출"
+    "상품매출",
+    "상품금액"
   ],
 
   "discount_amount": [
@@ -203,17 +226,9 @@
     "delivery_fee",
     "deliveryfee",
     "freight",
+    "freight_value",
     "배송비",
     "택배비"
-  ],
-
-  "payment_id": [
-    "payment_id",
-    "paymentid",
-    "pay_id",
-    "payid",
-    "결제id",
-    "결제번호"
   ],
 
   "payment_method": [
@@ -227,33 +242,6 @@
     "결제방법"
   ],
 
-  "payment_amount": [
-    "payment_amount",
-    "paymentamount",
-    "paid_amount",
-    "paidamount",
-    "결제금액",
-    "실결제금액"
-  ],
-
-  "payment_installments": [
-    "payment_installments",
-    "paymentinstallments",
-    "installments",
-    "installment",
-    "할부",
-    "할부개월"
-  ],
-
-  "payment_date": [
-    "payment_date",
-    "paymentdate",
-    "paid_at",
-    "paidat",
-    "결제일",
-    "결제일자"
-  ],
-
   "order_status": [
     "order_status",
     "orderstatus",
@@ -262,47 +250,6 @@
     "state",
     "배송상태",
     "주문상태"
-  ],
-
-  "logistics_id": [
-    "logistics_id",
-    "logisticsid",
-    "delivery_id",
-    "deliveryid",
-    "shipment_id",
-    "shipmentid",
-    "배송id",
-    "배송번호"
-  ],
-
-  "shipped_date": [
-    "shipped_date",
-    "shippeddate",
-    "shipping_date",
-    "shippingdate",
-    "dispatch_date",
-    "출고일",
-    "배송시작일"
-  ],
-
-  "delivered_date": [
-    "delivered_date",
-    "delivereddate",
-    "delivery_date",
-    "deliverydate",
-    "received_date",
-    "배송완료일",
-    "수령일"
-  ],
-
-  "estimated_delivery_date": [
-    "estimated_delivery_date",
-    "estimateddeliverydate",
-    "expected_delivery_date",
-    "expecteddeliverydate",
-    "est_delivery_date",
-    "예상배송일",
-    "배송예정일"
   ],
 
   "seller_id": [
@@ -329,6 +276,42 @@
     "스토어명"
   ],
 
+  "delivered_date": [
+    "delivered_date",
+    "delivereddate",
+    "delivery_date",
+    "deliverydate",
+    "received_date",
+    "order_delivered_customer_date",
+    "delivery_completed_date",
+    "배송완료일",
+    "수령일"
+  ],
+
+  "shipped_date": [
+    "shipped_date",
+    "shippeddate",
+    "shipping_date",
+    "shippingdate",
+    "dispatch_date",
+    "order_delivered_carrier_date",
+    "shipping_limit_date",
+    "carrier_date",
+    "출고일",
+    "배송시작일"
+  ],
+
+  "estimated_delivery_date": [
+    "estimated_delivery_date",
+    "estimateddeliverydate",
+    "expected_delivery_date",
+    "expecteddeliverydate",
+    "order_estimated_delivery_date",
+    "promise_date",
+    "예상배송일",
+    "배송예정일"
+  ],
+
   "review_score": [
     "review_score",
     "reviewscore",
@@ -346,50 +329,5 @@
     "review_cnt",
     "리뷰수",
     "리뷰개수"
-  ],
-
-  "customer_unique_id": [
-    "customer_unique_id",
-    "customeruniqueid",
-    "unique_customer_id",
-    "uniquecustomerid",
-    "고객고유id",
-    "통합고객id"
-  ],
-
-  "customer_region": [
-    "customer_region",
-    "customerregion",
-    "region",
-    "고객지역",
-    "지역"
-  ],
-
-  "customer_city": [
-    "customer_city",
-    "customercity",
-    "city",
-    "고객도시",
-    "도시"
-  ],
-
-  "customer_state": [
-    "customer_state",
-    "customerstate",
-    "state",
-    "province",
-    "고객주",
-    "주"
-  ],
-
-  "signup_date": [
-    "signup_date",
-    "signupdate",
-    "join_date",
-    "joindate",
-    "register_date",
-    "registerdate",
-    "가입일",
-    "회원가입일"
   ]
 }

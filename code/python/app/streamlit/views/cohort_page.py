@@ -16,7 +16,8 @@ from core.analytics.cohort import run_cohort
 from app.streamlit.session import (
     get_state,
     set_state,
-    PREPROCESSED_DF,
+    COLUMN_REGISTRY,
+    PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
     COHORT_RESULT
 )
@@ -39,10 +40,13 @@ def render_cohort_page():
 
     st.subheader("코호트 분석")
 
-    # 전처리 완료 여부 확인
-    preprocessed_df = get_state(PREPROCESSED_DF)
+    # column_registry 가져오기
+    column_registry = get_state(COLUMN_REGISTRY)
 
-    if preprocessed_df is None:
+    # 전처리 완료 여부 확인
+    preprocessed_tables = get_state(PREPROCESSED_TABLES)
+
+    if preprocessed_tables is None:
         st.warning("먼저 전처리를 완료해주세요.")
         return
     
@@ -56,7 +60,7 @@ def render_cohort_page():
     
     # 코호트 결과가 없으면 실행
     if get_state(COHORT_RESULT) is None:
-        _run_cohort(preprocessed_df)
+        _run_cohort(preprocessed_tables, column_registry)
     
     # 있으면 기존 결과 출력
     else:
@@ -64,12 +68,13 @@ def render_cohort_page():
 
 
 # _run_cohort: 코호트 분석 실행 내장 함수
-def _run_cohort(preprocessed_df):
+def _run_cohort(preprocessed_tables, column_registry):
     """
     코호트 분석을 실행하고 결과를 session_state에 저장합니다.
 
     Args:
-        preprocessed_df (pd.DataFrame): 전처리 완료 DataFrame
+        preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
     
     Returns:
         없음
@@ -80,7 +85,7 @@ def _run_cohort(preprocessed_df):
 
     with st.spinner("Cohort 분석 중..."):
         try:
-            cohort_result = run_cohort(preprocessed_df)
+            cohort_result = run_cohort(preprocessed_tables, column_registry)
             set_state(COHORT_RESULT, cohort_result)
             st.rerun()
 

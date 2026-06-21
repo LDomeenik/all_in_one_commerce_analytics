@@ -13,6 +13,8 @@ cohort.py
 
 import pandas as pd
 
+from core.analytics.table_selector import get_dataframe_with_columns
+
 
 # _get_first_purchase_month: 고객별 첫 구매 월 계산
 def _get_first_purchase_month(df: pd.DataFrame) -> pd.DataFrame:
@@ -117,12 +119,13 @@ def _build_retention_rate_matrix(cohort_matrix: pd.DataFrame) -> pd.DataFrame:
 
 
 # run_cohort: 코호트 분석 실행
-def run_cohort(df: pd.DataFrame) -> dict:
+def run_cohort(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) -> dict:
     """
     코호트 분석을 실행합니다.
 
     Args:
-        df (pd.DataFrame): 전처리 완료 DataFrame
+        tables (dict[str, pd.DataFrame]): 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
     
     Returns:
         dict: 코호트 분석 결과
@@ -130,8 +133,17 @@ def run_cohort(df: pd.DataFrame) -> dict:
             - retention_rate_matrix (pd.DataFrame): 코호트별 retention rate matrix (%)
     
     Raises:
-        ValueError: 입력 DataFrame이 비어 있는 경우
+        ValueError: 입력 DataFrame 이 비어 있는 경우
     """
+
+    # 필요한 컬럼을 가진 테이블 자동 선택
+    df = get_dataframe_with_columns(
+        tables,
+        column_registry,
+        required=[
+            "customer_id", "order_date", "order_id"
+        ]
+    )
 
     # 입력 DataFrame 검증
     if df is None or df.empty:
@@ -144,7 +156,7 @@ def run_cohort(df: pd.DataFrame) -> dict:
     ]
 
     data_df = df[data_columns]
-
+    
     # 코호트 matrix 생성
     cohort_matrix = _build_cohort_matrix(data_df)
 

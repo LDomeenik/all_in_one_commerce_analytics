@@ -13,6 +13,8 @@ KPI 분석 모듈
 
 import pandas as pd
 
+from core.analytics.table_selector import get_dataframe_with_columns
+
 
 # _get_revenue_stats: 매출 지표 계산
 def _get_revenue_stats(df: pd.DataFrame, monthly_trend: pd.DataFrame) -> dict:
@@ -303,12 +305,13 @@ def _get_monthly_trend(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # run_kpi: KPI 분석 실행
-def run_kpi(df: pd.DataFrame) -> dict:
+def run_kpi(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) -> dict:
     """
     KPI 분석을 실행합니다.
 
     Args:
-        df (pd.DataFrame): 전처리 완료 DataFrame
+        tables (dict[str, pd.DataFrame]): 테이블 딕셔너리
+        column_registryt (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
 
     Returns:
         dict: KPI 분석 결과
@@ -321,18 +324,38 @@ def run_kpi(df: pd.DataFrame) -> dict:
         ValueError: 입력 DataFrame 이 비어 있는 경우
     """
 
-    if df is None or df.empty:
-        raise ValueError("분석할 데이터가 없습니다.")
+    # 필요한 컬럼을 가진 테이블 자동 선택
+    df = get_dataframe_with_columns(
+        tables,
+        column_registry,
+        required=[
+            "order_id", "order_date", "revenue", "order_status", "customer_id", "discount_amount"
+        ],
+        agg={"revenue":"sum", "discount_amount":"sum"}
+    )
 
+    # 입력 DataFrame 검증
+    if df is None or df.empty:
+        raise ValueError("KPI 분석에 필요한 order 테이블이 없습니다.")
+
+    # Flag 컬럼을 제외한 컬럼만 추출
     data_columns = [
         col for col in df.columns
         if not col.startswith("is_")
     ]
+
     data_df = df[data_columns]
 
+    # 월별 추이 계산
     monthly_trend = _get_monthly_trend(data_df)
+
+    # 매출 지표 계산
     revenue_stats = _get_revenue_stats(data_df, monthly_trend)
+
+    # 주문 지표 계산
     order_stats = _get_order_stats(data_df, monthly_trend)
+
+    # 고객 지표 계산
     customer_stats = _get_customer_stats(data_df, monthly_trend)
 
     return {

@@ -17,7 +17,8 @@ from core.analytics.rfm import run_rfm
 from app.streamlit.session import (
     get_state,
     set_state,
-    PREPROCESSED_DF,
+    COLUMN_REGISTRY,
+    PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
     RFM_RESULT
 )
@@ -41,10 +42,13 @@ def render_rfm_page():
 
     st.subheader("RFM 분석")
 
-    # 전처리 완료 여부 확인
-    preprocessed_df = get_state(PREPROCESSED_DF)
+    # column_registry 가져오기
+    column_registry = get_state(COLUMN_REGISTRY)
 
-    if preprocessed_df is None:
+    # 전처리 완료 여부 확인
+    preprocessed_tables = get_state(PREPROCESSED_TABLES)
+
+    if preprocessed_tables is None:
         st.warning("먼저 전처리를 완료해주세요.")
         return
     
@@ -58,7 +62,7 @@ def render_rfm_page():
     
     # RFM 결과가 없으면 실행
     if get_state(RFM_RESULT) is None:
-        _run_rfm(preprocessed_df)
+        _run_rfm(preprocessed_tables, column_registry)
     
     # 있으면 기존 결과 출력
     else:
@@ -66,12 +70,13 @@ def render_rfm_page():
 
 
 # _run_rfm: rfm 분석 실행 내장 함수
-def _run_rfm(preprocessed_df):
+def _run_rfm(preprocessed_tables, column_registry):
     """
     RFM 분석을 실행하고 결과를 session_state에 저장합니다.
 
     Args:
-        preprocessed_df (pd.DataFrame): 전처리 완료 DataFrame
+        preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
+        column_registry (dict[str, str]): {컬럼명: 테이블유형} 레지스트리
     
     Returns:
         없음
@@ -82,7 +87,7 @@ def _run_rfm(preprocessed_df):
 
     with st.spinner("RFM 분석 중..."):
         try:
-            rfm_result = run_rfm(preprocessed_df)
+            rfm_result = run_rfm(preprocessed_tables, column_registry)
             set_state(RFM_RESULT, rfm_result)
             st.rerun()
 

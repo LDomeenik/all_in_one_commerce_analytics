@@ -39,8 +39,10 @@ def _get_category_summary(df: pd.DataFrame) -> pd.DataFrame:
     agg_dict = {
         "item_revenue" : "sum",
         "order_id" : "nunique",
-        "product_id" : "nunique"
     }
+
+    if "product_id" in df.columns:
+        agg_dict["product_id"] = "nunique"
 
     if "quantity" in df.columns:
         agg_dict["quantity"] = "sum"

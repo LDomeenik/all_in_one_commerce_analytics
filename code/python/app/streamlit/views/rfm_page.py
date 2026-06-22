@@ -20,7 +20,8 @@ from app.streamlit.session import (
     COLUMN_REGISTRY,
     PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
-    RFM_RESULT
+    RFM_RESULT,
+    ANALYSIS_STATUS
 )
 from app.streamlit.constants import CHART_COLORS
 
@@ -88,10 +89,23 @@ def _run_rfm(preprocessed_tables, column_registry):
     with st.spinner("RFM 분석 중..."):
         try:
             rfm_result = run_rfm(preprocessed_tables, column_registry)
+
+            # 분석 성공 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["rfm"] = "success"
+
             set_state(RFM_RESULT, rfm_result)
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.rerun()
 
         except ValueError as e:
+            # 분석 실패 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["rfm"] = "failed"
+
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.error(f"RFM 분석 중 오류가 발생했습니다: {e}")
 
 
@@ -178,5 +192,10 @@ def _render_rfm_result():
 
     # 재실행 버튼
     if st.button("재실행"):
+        analysis_status = get_state(ANALYSIS_STATUS) or {}
+        analysis_status.pop("rfm", None)
+
         set_state(RFM_RESULT, None)
+        set_state(ANALYSIS_STATUS, analysis_status)
+
         st.rerun()

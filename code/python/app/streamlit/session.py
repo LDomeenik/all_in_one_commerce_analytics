@@ -27,6 +27,7 @@ MAPPING_RESULT = "mapping_result"
 CONFIRMED_MAPPING = "confirmed_mapping"
 RENAME_DICT = "rename_dict"
 UNMAPPED_COLUMNS = "unmapped_columns"
+CONFLICT_RESOLUTIONS = "conflict_resolutions"
 
 # 전처리
 PREPROCESSED_TABLES = "preprocessed_tables"
@@ -35,6 +36,9 @@ COLUMN_REGISTRY = "column_registry"
 
 # 진단
 DIAGNOSIS_RESULT = "diagnosis_result"
+
+# 분석 실행 상태
+ANALYSIS_STATUS = "analysis_status"
 
 # 분석 결과
 EDA_RESULT = "eda_result"
@@ -71,10 +75,12 @@ def init_session():
         CONFIRMED_MAPPING: None,
         RENAME_DICT: None,
         UNMAPPED_COLUMNS: [],
+        CONFLICT_RESOLUTIONS: {},
         PREPROCESSED_TABLES: None,
         PREPROCESSING_SUMMARY: None,
         COLUMN_REGISTRY: {},
         DIAGNOSIS_RESULT: None,
+        ANALYSIS_STATUS: {},
         EDA_RESULT: None,
         KPI_RESULT: None,
         COHORT_RESULT: None,

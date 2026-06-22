@@ -95,7 +95,6 @@ def run_category(tables: dict[str, pd.DataFrame], column_registry: dict[str, str
         tables,
         column_registry,
         required=["product_category", "item_revenue", "order_id"],
-        agg={"item_revenue":"sum"}
     )
 
     # 입력 DataFrame 검증

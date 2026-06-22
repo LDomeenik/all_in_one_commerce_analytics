@@ -19,7 +19,8 @@ from app.streamlit.session import (
     COLUMN_REGISTRY,
     PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
-    COHORT_RESULT
+    COHORT_RESULT,
+    ANALYSIS_STATUS
 )
 
 
@@ -86,10 +87,23 @@ def _run_cohort(preprocessed_tables, column_registry):
     with st.spinner("Cohort 분석 중..."):
         try:
             cohort_result = run_cohort(preprocessed_tables, column_registry)
+
+            # 분석 성공 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["cohort"] = "success"
+
             set_state(COHORT_RESULT, cohort_result)
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.rerun()
 
         except ValueError as e:
+            # 분석 실패 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["cohort"] = "failed"
+
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.error(f"Cohort 분석 중 오류가 발생했습니다: {e}")
 
 
@@ -152,5 +166,10 @@ def _render_cohort_result():
 
     # 재실행 출력
     if st.button("재실행"):
+        analysis_status = get_state(ANALYSIS_STATUS) or {}
+        analysis_status.pop("cohort", None)
+
         set_state(COHORT_RESULT, None)
+        set_state(ANALYSIS_STATUS, analysis_status)
+
         st.rerun()

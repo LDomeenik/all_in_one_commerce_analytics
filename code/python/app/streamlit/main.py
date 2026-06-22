@@ -6,27 +6,15 @@ Streamlit 앱 진입점 모듈
 기능:
     - Streamlit 페이지 기본 설정
     - session_state 초기화
-    - 사이드바 네비게이션 구성
-    - 각 페이지 렌더링 호출
+    - 사이드바 렌더링 호출
+    - 선택된 페이지 렌더링 호출
 """
 
 
 import streamlit as st
 
-from app.streamlit.session import (
-    init_session, 
-    get_state,
-    TABLES,
-    CONFIRMED_MAPPING,
-    PREPROCESSED_TABLES,
-    DIAGNOSIS_RESULT,
-    EDA_RESULT,
-    KPI_RESULT,
-    COHORT_RESULT,
-    RFM_RESULT,
-    PRODUCT_RESULT,
-    DELIVERY_RESULT
-)
+from app.streamlit.session import init_session
+from app.streamlit.sidebar import render_sidebar
 
 from app.streamlit.views.upload_page import render_upload_page
 from app.streamlit.views.mapping_page import render_mapping_page
@@ -66,70 +54,8 @@ def main():
     # session_state 초기화
     init_session()
 
-    # 사이드바 네비게이션
-    st.sidebar.title("📊 Commerce Analytics")
-    st.sidebar.divider()
-
-    page = st.sidebar.radio(
-        "페이지 선택",
-        options=["데이터 업로드", "컬럼 매핑", "전처리", "진단", "EDA", "KPI", "Cohort", "RFM", "상품", "배송/운영"],
-        index=0
-    )
-
-    st.sidebar.divider()
-
-    # 진행 상태 표시
-    st.sidebar.write("#### 진행 상태")
-
-    if get_state(TABLES) is not None:
-        st.sidebar.write("✅ 데이터 업로드 완료")
-    else:
-        st.sidebar.write("⬜ 데이터 업로드 대기 중")
-
-    if get_state(CONFIRMED_MAPPING) is not None:
-        st.sidebar.write("✅ 컬럼 매핑 완료")
-    else:
-        st.sidebar.write("⬜ 컬럼 매핑 대기 중")
-
-    if get_state(PREPROCESSED_TABLES) is not None:
-        st.sidebar.write("✅ 전처리 완료")
-    else:
-        st.sidebar.write("⬜ 전처리 대기 중")
-    
-    if get_state(DIAGNOSIS_RESULT) is not None:
-        st.sidebar.write("✅ 진단 완료")
-    else:
-        st.sidebar.write("⬜ 진단 대기 중")
-
-    if get_state(EDA_RESULT) is not None:
-        st.sidebar.write("✅ EDA 완료")
-    else:
-        st.sidebar.write("⬜ EDA 대기 중")
-
-    if get_state(KPI_RESULT) is not None:
-        st.sidebar.write("✅ KPI 분석 완료")
-    else:
-        st.sidebar.write("⬜ KPI 분석 대기 중")
-
-    if get_state(COHORT_RESULT) is not None:
-        st.sidebar.write("✅ 코호트 분석 완료")
-    else:
-        st.sidebar.write("⬜ 코호트 분석 대기 중")
-    
-    if get_state(RFM_RESULT) is not None:
-        st.sidebar.write("✅ RFM 분석 완료")
-    else:
-        st.sidebar.write("⬜ RFM 분석 대기 중")
-    
-    if get_state(PRODUCT_RESULT) is not None:
-        st.sidebar.write("✅ 상품 분석 완료")
-    else:
-        st.sidebar.write("⬜ 상품 분석 대기 중")
-
-    if get_state(DELIVERY_RESULT) is not None:
-        st.sidebar.write("✅ 배송/운영 분석 완료")
-    else:
-        st.sidebar.write("⬜ 배송/운영 분석 대기 중")
+    # 사이드바 렌더링
+    page = render_sidebar()
 
     # 페이지 렌더링
     if page == "데이터 업로드":

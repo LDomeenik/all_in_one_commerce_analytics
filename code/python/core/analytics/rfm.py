@@ -86,7 +86,12 @@ def _score_rfm(rfm_df: pd.DataFrame) -> pd.DataFrame:
             return pd.Series([mid] * len(series), index=series.index)
 
         actual_q = min(n_unique, q)
-        actual_labels = labels[:actual_q]
+
+        _, bins = pd.qcut(series, q=actual_q, duplicates="drop", retbins=True)
+
+        actual_bin_count = len(bins) - 1
+
+        actual_labels = labels[:actual_bin_count]
         
         return pd.qcut(series, q=actual_q, labels=actual_labels, duplicates="drop")
 
@@ -225,7 +230,6 @@ def run_rfm(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) ->
         tables,
         column_registry,
         required=["customer_id", "order_date", "order_id", "revenue"],
-        agg={"revenue":"sum"}
     )
 
     # 입력 DataFrame 검증

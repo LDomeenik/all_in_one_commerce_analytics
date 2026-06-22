@@ -23,7 +23,8 @@ from app.streamlit.session import (
     COLUMN_REGISTRY,
     PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
-    KPI_RESULT
+    KPI_RESULT,
+    ANALYSIS_STATUS
 )
 from app.streamlit.constants import CHART_COLORS
 
@@ -91,10 +92,23 @@ def _run_kpi(preprocessed_tables, column_registry):
     with st.spinner("KPI 분석 중..."):
         try:
             kpi_result = run_kpi(preprocessed_tables, column_registry)
+
+            # 분석 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["kpi"] = "success"
+
             set_state(KPI_RESULT, kpi_result)
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.rerun()
 
         except ValueError as e:
+            # 분석 실패 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["kpi"] = "failed"
+
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.error(f"KPI 분석 중 오류가 발생했습니다: {e}")
 
 
@@ -132,7 +146,12 @@ def _render_kpi_result():
         _render_customer_tab(customer_stats, monthly_trend)
 
     if st.button("재실행"):
+        analysis_status = get_state(ANALYSIS_STATUS) or {}
+        analysis_status.pop("kpi", None)
+
         set_state(KPI_RESULT, None)
+        set_state(ANALYSIS_STATUS, analysis_status)
+
         st.rerun()
 
 

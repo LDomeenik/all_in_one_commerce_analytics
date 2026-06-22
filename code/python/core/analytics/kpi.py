@@ -330,8 +330,7 @@ def run_kpi(tables: dict[str, pd.DataFrame], column_registry: dict[str, str]) ->
         column_registry,
         required=[
             "order_id", "order_date", "revenue", "order_status", "customer_id", "discount_amount"
-        ],
-        agg={"revenue":"sum", "discount_amount":"sum"}
+        ]
     )
 
     # 입력 DataFrame 검증

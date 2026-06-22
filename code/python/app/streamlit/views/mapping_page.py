@@ -7,6 +7,7 @@ mapping_page.py
     - 자동 매핑 실행 및 결과 출력
     - Confidence Score 기반 검수 상태 표시
     - 사용자 매핑 수정 UI 렌더링
+    - 동일 표준 컬럼 충돌 감지 및 해소 UI
     - 최종 매핑 확정 및 Staging DataFrame 생성
     - 매핑 결과 session_state 저장
 """
@@ -24,21 +25,28 @@ from app.streamlit.session import (
     MAPPING_RESULT,
     CONFIRMED_MAPPING,
     RENAME_DICT,
-    UNMAPPED_COLUMNS
+    UNMAPPED_COLUMNS,
+    COLUMN_REGISTRY,
+    CONFLICT_RESOLUTIONS
 )
+from core.analytics.table_selector import build_column_registry
 
 
-# _get_review_status: 검수 상태 반환 내장 함수
+# _get_review_status: confidence와 매핑 여부로 검수 상태 문자열 반환
 def _get_review_status(confidence: float, mapped_to) -> str:
     """
-    Confidence Score와 매핑 여부를 기준으로 검수 상태를 반환합니다.
+    confidence 점수와 매핑 대상 여부를 기준으로 검수 상태를 반환합니다.
 
     Args:
-        confidence (float): 매핑 신뢰도
-        mapped_to (str | None): 매핑된 표준 컬럼명
+        confidence (float): 매핑 신뢰도 점수 (0.0 ~ 1.0)
+        mapped_to: 매핑된 표준 컬럼명 (None이면 미매핑)
 
     Returns:
         str: 검수 상태
+            - "미매핑": mapped_to가 None인 경우
+            - "자동 매핑": confidence >= 0.9
+            - "확인 필요": confidence >= 0.7
+            - "검수 필요": confidence < 0.7
 
     Raises:
         없음
@@ -53,16 +61,23 @@ def _get_review_status(confidence: float, mapped_to) -> str:
     return "검수 필요"
 
 
-# _build_mapping_df: 매핑 결과를 화면 출력용 DataFrame으로 변환하는 내장 함수
+# _build_mapping_df: 단일 테이블 매핑 결과를 DataFrame으로 변환
 def _build_mapping_df(mapping_result: dict) -> pd.DataFrame:
     """
-    매핑 결과 딕셔너리를 화면 출력용 DataFrame으로 변환합니다.
+    단일 테이블의 매핑 결과 딕셔너리를 UI 출력용 DataFrame으로 변환합니다.
 
     Args:
-        mapping_result (dict): 자동 매핑 결과
+        mapping_result (dict): 단일 테이블의 매핑 결과
+            {원본컬럼명: {"normalized_column", "mapped_to", "confidence", "source"}}
 
     Returns:
-        pd.DataFrame: 화면 출력용 매핑 결과 DataFrame
+        pd.DataFrame: 매핑 결과 요약 DataFrame
+            - 원본 컬럼명 (str): 원본 CSV 컬럼명
+            - 정규화된 컬럼명 (str): 소문자/언더스코어 정규화된 컬럼명
+            - 매핑된 표준 컬럼 (str): 매핑된 표준 컬럼명 (미매핑이면 "-")
+            - 신뢰도 (float): 매핑 신뢰도 점수
+            - 매핑 근거 (str): 매핑 근거 소스 목록
+            - 검수 상태 (str): 자동 매핑 / 확인 필요 / 검수 필요 / 미매핑
 
     Raises:
         없음
@@ -83,10 +98,53 @@ def _build_mapping_df(mapping_result: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# render_mapping_page: 컬럼 매핑 페이지 렌더링
+# _find_conflicts: 여러 테이블에 중복 매핑된 표준 컬럼 탐지
+def _find_conflicts(mapping_result: dict) -> dict:
+    """
+    전체 테이블의 매핑 결과를 순회하며 동일한 표준 컬럼에
+    여러 테이블이 매핑된 충돌 케이스를 탐지합니다.
+
+    Args:
+        mapping_result (dict): 전체 테이블 매핑 결과
+            {테이블유형: {원본컬럼명: {"mapped_to", ...}}}
+
+    Returns:
+        dict: 충돌 정보
+            {표준컬럼명: [(테이블유형, 원본컬럼명), ...]}
+            충돌이 없으면 빈 딕셔너리 반환
+
+    Raises:
+        없음
+    """
+
+    # 표준 컬럼 → (테이블유형, 원본컬럼명) 목록으로 역인덱싱
+    standard_to_tables = {}
+
+    for table_type, table_mapping in mapping_result.items():
+        for source_col, info in table_mapping.items():
+            mapped_to = info["mapped_to"]
+
+            if mapped_to is None:
+                continue
+
+            standard_to_tables.setdefault(mapped_to, [])
+            standard_to_tables[mapped_to].append((table_type, source_col))
+
+    # 2개 이상의 테이블에 매핑된 표준 컬럼만 반환
+    return {
+        std_col: tables
+        for std_col, tables in standard_to_tables.items()
+        if len(tables) > 1
+    }
+
+
+# render_mapping_page: 매핑 페이지 렌더링
 def render_mapping_page():
     """
     컬럼 매핑 페이지를 렌더링합니다.
+
+    자동 매핑 실행 → 결과 요약 출력 → 사용자 검수 UI → 최종 확정 버튼 순서로 진행합니다.
+    매핑이 확정된 경우 Staging 미리보기를 추가로 출력합니다.
 
     Args:
         없음
@@ -100,14 +158,13 @@ def render_mapping_page():
 
     st.subheader("2단계. 컬럼 매핑")
 
-    # 업로드된 파일 확인
+    # 업로드된 테이블이 없으면 안내 후 종료
     tables = get_state(TABLES)
-
     if not tables:
         st.warning("먼저 데이터를 업로드해주세요.")
         return
 
-    # 테이블별 독립 매핑 실행
+    # 매핑 결과가 없으면 자동 매핑 실행, 있으면 기존 결과 사용
     if get_state(MAPPING_RESULT) is None:
         mapping_result = {}
         for table_type, df in tables.items():
@@ -116,27 +173,28 @@ def render_mapping_page():
     else:
         mapping_result = get_state(MAPPING_RESULT)
 
-    # 매핑 결과 요약 출력
+    # 자동 매핑 결과 요약 출력
     _render_mapping_summary(mapping_result)
-
     st.divider()
 
-    # 사용자 검수 UI
-    _render_human_review(mapping_result)
+    # 충돌 탐지 후 사용자 검수 UI 출력
+    conflicts = _find_conflicts(mapping_result)
+    _render_human_review(mapping_result, conflicts)
 
-    # 확정 완료 후 결과 표시
+    # 매핑이 확정된 경우 Staging 미리보기 출력
     if get_state(CONFIRMED_MAPPING) is not None:
         st.divider()
         _render_staging_preview()
 
 
-# _render_mapping_summary: 매핑 결과 요약 출력 내장 함수
+# _render_mapping_summary: 자동 매핑 결과 요약 출력
 def _render_mapping_summary(mapping_result: dict):
     """
-    매핑 결과 요약 정보를 출력합니다.
+    전체 테이블의 자동 매핑 결과를 집계하여 요약 지표와 테이블로 출력합니다.
 
     Args:
-        mapping_result (dict): 자동 매핑 결과
+        mapping_result (dict): 전체 테이블 매핑 결과
+            {테이블유형: {원본컬럼명: {"normalized_column", "mapped_to", "confidence", "source"}}}
 
     Returns:
         없음
@@ -145,48 +203,46 @@ def _render_mapping_summary(mapping_result: dict):
         없음
     """
 
-    # 전체 집계
+    # 테이블별 매핑 DataFrame 생성 후 합치기
     all_rows = []
+
     for table_type, table_mapping in mapping_result.items():
         df = _build_mapping_df(table_mapping)
-        df["테이블"] = table_type
+        df["테이블"] = table_type  # 테이블 구분 컬럼 추가
         all_rows.append(df)
 
     mapping_df = pd.concat(all_rows, ignore_index=True)
 
-    # 상태별 집계
+    # 검수 상태별 집계
     total = len(mapping_df)
     auto_mapped = len(mapping_df[mapping_df["검수 상태"] == "자동 매핑"])
     need_review = len(mapping_df[mapping_df["검수 상태"] == "확인 필요"])
     need_check = len(mapping_df[mapping_df["검수 상태"] == "검수 필요"])
     unmapped = len(mapping_df[mapping_df["검수 상태"] == "미매핑"])
 
-    # 요약 메트릭 출력
+    # 요약 지표 출력
     st.write("#### 자동 매핑 결과")
     col1, col2, col3, col4, col5 = st.columns(5)
 
-    with col1:
-        st.metric("전체 컬럼", total)
-    with col2:
-        st.metric("자동 매핑", auto_mapped)
-    with col3:
-        st.metric("확인 필요", need_review)
-    with col4:
-        st.metric("검수 필요", need_check)
-    with col5:
-        st.metric("미매핑", unmapped)
+    with col1: st.metric("전체 컬럼", total)
+    with col2: st.metric("자동 매핑", auto_mapped)
+    with col3: st.metric("확인 필요", need_review)
+    with col4: st.metric("검수 필요", need_check)
+    with col5: st.metric("미매핑", unmapped)
 
-    # 매핑 결과 테이블 출력
+    # 전체 매핑 결과 테이블 출력
     st.dataframe(mapping_df, use_container_width=True)
 
 
-# _render_human_review: 사용자 검수 UI 렌더링 내장 함수
-def _render_human_review(mapping_result: dict):
+# _render_human_review: 사용자 매핑 검수 및 충돌 해소 UI 출력
+def _render_human_review(mapping_result: dict, conflicts: dict):
     """
-    사용자가 매핑 결과를 수정하고 확정할 수 있는 UI를 렌더링합니다.
+    사용자가 각 컬럼의 매핑을 직접 수정할 수 있는 검수 UI를 출력합니다.
+    충돌이 있는 경우 어느 테이블의 컬럼을 분석에 사용할지 선택하는 UI도 함께 출력합니다.
 
     Args:
-        mapping_result (dict): 자동 매핑 결과
+        mapping_result (dict): 전체 테이블 매핑 결과
+        conflicts (dict): 충돌 정보 {표준컬럼명: [(테이블유형, 원본컬럼명), ...]}
 
     Returns:
         없음
@@ -198,12 +254,35 @@ def _render_human_review(mapping_result: dict):
     st.write("#### 최종 매핑 선택")
     st.write("자동 매핑 결과를 확인하고 잘못된 컬럼은 직접 수정해주세요.")
 
-    # 표준 컬럼 목록 로드
-    standard_column_list = get_standard_column_list()
+    # 충돌이 있으면 해소 UI 먼저 출력
+    if conflicts:
+        st.warning(
+            f"⚠️ {len(conflicts)}개 표준 컬럼이 여러 테이블에 중복 매핑되어 있습니다. "
+            "분석에 사용할 테이블을 선택해주세요."
+        )
 
-    # 사용자 선택 결과 저장용 딕셔너리
+        with st.expander("🔶 충돌 컬럼 해소", expanded=True):
+            for std_col, table_list in conflicts.items():
+                table_options = [t for t, _ in table_list]
+
+                # 어느 테이블의 어느 원본 컬럼이 충돌하는지 표시
+                source_info = ", ".join([f"{t} ({src})" for t, src in table_list])
+                st.caption(f"원본: {source_info}")
+
+                # 사용자가 분석에 쓸 테이블을 선택 (key: conflict_{표준컬럼명})
+                st.selectbox(
+                    label=f"**{std_col}** - 분석에 사용할 테이블 선택",
+                    options=table_options,
+                    key=f"conflict_{std_col}"
+                )
+
+        st.divider()
+
+    # 표준 컬럼 목록 로드 (selectbox 옵션)
+    standard_column_list = get_standard_column_list()
     user_selections = {}
 
+    # 테이블별로 컬럼 매핑 selectbox 출력
     for table_type, table_mapping in mapping_result.items():
         st.write(f"**{table_type} 테이블**")
 
@@ -212,14 +291,23 @@ def _render_human_review(mapping_result: dict):
             confidence = info["confidence"]
             status = _get_review_status(confidence, mapped_to)
 
-            # 기본 선택값 설정
+            # 충돌 컬럼 여부 확인 (해당 테이블이 충돌에 포함된 경우)
+            is_conflict = (
+                mapped_to is not None
+                and mapped_to in conflicts
+                and any(t == table_type for t, _ in conflicts[mapped_to])
+            )
+
+            # 현재 매핑값의 selectbox 기본 인덱스 설정
             if mapped_to in standard_column_list:
                 default_index = standard_column_list.index(mapped_to)
             else:
                 default_index = 0
 
-            # 검수 상태에 따른 레이블 색상 표시
-            if status == "미매핑":
+            # 검수 상태별 아이콘 라벨
+            if is_conflict:
+                label = f"⚠️ {source_column}"
+            elif status == "미매핑":
                 label = f"🔴 {source_column}"
             elif status == "검수 필요":
                 label = f"🟡 {source_column}"
@@ -228,70 +316,96 @@ def _render_human_review(mapping_result: dict):
             else:
                 label = f"✅ {source_column}"
 
+            # 사용자 매핑 선택 (key: mapping_select_{테이블유형}_{원본컬럼명})
             selected = st.selectbox(
                 label=label,
                 options=standard_column_list,
                 index=default_index,
                 key=f"mapping_select_{table_type}_{source_column}"
             )
-
             user_selections[f"{table_type}_{source_column}"] = selected
-    
+
         st.divider()
 
     # 최종 매핑 확정 버튼
     if st.button("최종 매핑 확정", type="primary"):
-        _confirm_and_apply(mapping_result, user_selections)
+
+        # session_state에서 충돌 해소 선택값 수집
+        conflict_selections = {
+            std_col: st.session_state[f"conflict_{std_col}"]
+            for std_col in conflicts.keys()
+            if f"conflict_{std_col}" in st.session_state
+        }
+
+        _confirm_and_apply(mapping_result, user_selections, conflict_selections)
 
 
-# _confirm_and_apply: 매핑 확정 및 Staging DataFrame 생성 내장 함수
-def _confirm_and_apply(mapping_result: dict, user_selections: dict):
+# _confirm_and_apply: 최종 매핑 확정 및 session_state 저장
+def _confirm_and_apply(
+    mapping_result: dict,
+    user_selections: dict,
+    conflict_selections: dict
+):
     """
-    사용자 확정 결과를 반영하고 Staging DataFrame을 생성합니다.
+    사용자가 확정한 매핑을 적용하고 결과를 session_state에 저장합니다.
+
+    모든 테이블에 대해 apply_mapping을 실행하고,
+    컬럼 레지스트리를 빌드하여 이후 분석 모듈에서 사용할 수 있도록 저장합니다.
 
     Args:
-        mapping_result (dict): 자동 매핑 결과
-        user_selections (dict): 사용자가 선택한 매핑 결과
+        mapping_result (dict): 전체 테이블 자동 매핑 결과
+        user_selections (dict): 사용자가 선택한 최종 매핑
+            {"테이블유형_원본컬럼명": 표준컬럼명}
+        conflict_selections (dict): 충돌 해소 결과
+            {표준컬럼명: 선택된 테이블유형}
 
     Returns:
         없음
 
     Raises:
-        없음
+        ValueError: apply_mapping에서 중복 컬럼 매핑이 발생한 경우
     """
 
     try:
         tables = get_state(TABLES)
 
-        # 각 테이블에 매핑 적용
         mapped_tables = {}
         all_unmapped = []
         confirmed_mapping_all = {}
 
+        # 테이블별로 최종 매핑 확정 및 적용
         for table_type, df in tables.items():
             table_mapping = mapping_result[table_type]
 
-            # 이 테이블의 user_selections 추출
+            # 해당 테이블의 user_selections만 추출
             table_selections = {
                 col: user_selections[f"{table_type}_{col}"]
                 for col in table_mapping.keys()
             }
 
-            # 확정 매핑 생성
+            # 최종 매핑 딕셔너리 생성 (None 제외, 중복 검사 포함)
             confirmed = confirm_mapping(table_mapping, table_selections)
             confirmed_mapping_all[table_type] = confirmed
 
-            # 매핑 적용
+            # 실제 컬럼명 변환 적용
             mapped_df, rename_dict, unmapped_columns = apply_mapping(df, confirmed)
             mapped_tables[table_type] = mapped_df
             all_unmapped.extend(unmapped_columns)
 
+        # 매핑 결과 session_state 저장
         set_state(CONFIRMED_MAPPING, confirmed_mapping_all)
         set_state(TABLES, mapped_tables)
         set_state(RENAME_DICT, rename_dict)
         set_state(UNMAPPED_COLUMNS, all_unmapped)
+        set_state(CONFLICT_RESOLUTIONS, conflict_selections)
 
-        # 강제 재실행으로 사이드바 상태 즉시 업데이트
+        # 컬럼 레지스트리 빌드 및 저장 (충돌 해소 결과 반영)
+        column_registry = build_column_registry(
+            mapped_tables,
+            conflict_resolutions=conflict_selections
+        )
+        set_state(COLUMN_REGISTRY, column_registry)
+
         st.rerun()
 
     except ValueError as e:
@@ -299,10 +413,11 @@ def _confirm_and_apply(mapping_result: dict, user_selections: dict):
         st.info("💡 같은 표준 컬럼으로 매핑된 원본 컬럼이 있습니다. 위 매핑 선택에서 하나를 'None'으로 변경해주세요.")
 
 
-# _render_staging_preview: Staging 데이터 미리보기 출력 내장 함수
+# _render_staging_preview: 매핑 확정 후 Staging 미리보기 출력
 def _render_staging_preview():
     """
-    확정된 매핑 결과와 Staging DataFrame 미리보기를 출력합니다.
+    최종 매핑이 확정된 후 Staging 데이터 미리보기를 출력합니다.
+    미매핑 컬럼이 있으면 제외됨을 경고로 안내합니다.
 
     Args:
         없음
@@ -320,15 +435,16 @@ def _render_staging_preview():
     st.subheader("3단계 준비 완료")
     st.success("최종 매핑이 확정되었습니다.")
 
-    # 미매핑 컬럼 경고
+    # 미매핑 컬럼이 있으면 제외 안내
     if unmapped_columns:
         st.warning(
             f"미매핑 컬럼 {len(unmapped_columns)}개가 "
             f"Staging에서 제외됩니다: {unmapped_columns}"
         )
 
-    # 각 테이블별 미리보기 출력
+    # 테이블별 상위 20행 미리보기
     st.write("#### Staging 데이터 미리보기")
+
     for table_type, df in tables.items():
         st.write(f"**{table_type} 테이블**")
         st.dataframe(df.head(20), use_container_width=True)

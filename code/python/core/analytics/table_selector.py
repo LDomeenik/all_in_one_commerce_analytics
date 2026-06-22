@@ -59,31 +59,41 @@ def _find_join_key(df1: pd.DataFrame, df2: pd.DataFrame) -> str | None:
 
 # build_column_registry: 컬럼 레지스트리 생성
 def build_column_registry(
-    preprocessed_tables: dict[str, pd.DataFrame]
+    preprocessed_tables: dict[str, pd.DataFrame],
+    conflict_resolutions: dict[str, str] = None
 ) -> dict[str, str]:
     """
     전처리 완료 테이블에서 {컬럼명: 테이블유형} 레지스트리를 생성합니다.
     is_ 로 시작하는 flag 컬럼은 제외합니다.
+    동일 컬럼이 여러 테이블에 있으면 conflict_resolutions 기준으로 결정합니다.
 
     Args:
         preprocessed_tables (dict[str, pd.DataFrame]): 전처리 완료 테이블 딕셔너리
+        conflict_resolutions (dict[str, str]): 충돌 해소 결과
+            {표준컬럼명: 선택된 테이블유형}
+            없으면 마지막으로 등록된 테이블이 사용됨
 
     Returns:
         dict[str, str]: {컬럼명: 테이블유형} 딕셔너리
-            예: {"order_id": "order", "item_revenue": "order_item"}
 
     Raises:
         없음
     """
 
+    conflict_resolutions = conflict_resolutions or {}
     registry = {}
 
-    # 각 테이블 순회하며 컬럼명 → 테이블 유형 저장
     for table_type, df in preprocessed_tables.items():
-
-        # flag 컬럼 제외하고 컬럼명 → 테이블 유형 저장
         for col in df.columns:
-            if not col.startswith("is_"):
+            if col.startswith("is_"):
+                continue
+
+            # 충돌 해소 결과가 있으면 지정된 테이블만 등록
+            if col in conflict_resolutions:
+                if table_type == conflict_resolutions[col]:
+                    registry[col] = table_type
+            else:
+                # 충돌 없는 컬럼은 그냥 등록 (마지막 테이블이 덮어씀)
                 registry[col] = table_type
 
     return registry
@@ -157,6 +167,14 @@ def get_dataframe_with_columns(
 
         if join_key is None:
             continue
+
+        # JOIN 전에 other_df에서 중복 컬럼 제거
+        overlap_cols = [
+            col for col in other_df.columns
+            if col in result_df.columns and col != join_key
+        ]
+
+        other_df = other_df.drop(columns=overlap_cols)
 
         # agg가 있으면 JOIN 전에 집계 먼저 실행 (행 뻥튀기 방지)
         if agg:

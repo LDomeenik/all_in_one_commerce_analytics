@@ -23,7 +23,8 @@ from app.streamlit.session import (
     PREPROCESSED_TABLES,
     CONFIRMED_MAPPING,
     PREPROCESSING_SUMMARY,
-    COLUMN_REGISTRY
+    COLUMN_REGISTRY,
+    CONFLICT_RESOLUTIONS
 )
 
 
@@ -101,12 +102,105 @@ def _run_preprocessing(tables):
             
             set_state(PREPROCESSED_TABLES, preprocessed_tables)
             set_state(PREPROCESSING_SUMMARY, combined_summary)
-            set_state(COLUMN_REGISTRY, build_column_registry(preprocessed_tables))
+            conflict_resolutions = get_state(CONFLICT_RESOLUTIONS) or {}
+            set_state(COLUMN_REGISTRY, build_column_registry(preprocessed_tables, conflict_resolutions))
 
             st.rerun()
 
         except ValueError as e:
             st.error(f"전처리 중 오류가 발생했습니다: {e}")
+
+
+# _get_ordered_table_types: 테이블 탭 출력 순서 반환
+def _get_ordered_table_types(data: dict) -> list:
+    """
+    테이블 타입을 지정된 우선순위에 따라 정렬합니다.
+
+    우선순위:
+        1. order
+        2. order_item
+        3. customer
+        4. 그 외 추가 테이블
+
+    Args:
+        data (dict): 테이블 타입을 key로 가지는 딕셔너리
+
+    Returns:
+        list: 정렬된 테이블 타입 리스트
+
+    Raises:
+        없음
+    """
+
+    priority = ["order", "order_item", "customer"]
+
+    ordered = [
+        table_type
+        for table_type in priority
+        if table_type in data
+    ]
+
+    others = [
+        table_type
+        for table_type in data.keys()
+        if table_type not in priority
+    ]
+
+    return ordered + others
+
+
+# _get_table_icon: 테이블 타입별 아이콘 반환
+def _get_table_icon(table_type: str) -> str:
+    """
+    테이블 타입에 맞는 아이콘을 반환합니다.
+
+    Args:
+        table_type (str): 테이블 타입
+
+    Returns:
+        str: 아이콘 문자열
+
+    Raises:
+        없음
+    """
+
+    icon_map = {
+        "order": "📦",
+        "order_item": "🧾",
+        "customer": "👥",
+        "product": "🛍️",
+        "payment": "💳",
+        "delivery": "🚚"
+    }
+
+    return icon_map.get(table_type, "📄")
+
+
+# _get_table_label: 테이블 타입별 표시명 반환
+def _get_table_label(table_type: str) -> str:
+    """
+    테이블 타입에 맞는 사용자 표시명을 반환합니다.
+
+    Args:
+        table_type (str): 테이블 타입
+
+    Returns:
+        str: 사용자 표시명
+
+    Raises:
+        없음
+    """
+
+    label_map = {
+        "order": "주문",
+        "order_item": "주문 상품",
+        "customer": "고객",
+        "product": "상품",
+        "payment": "결제",
+        "delivery": "배송"
+    }
+
+    return label_map.get(table_type, table_type)
 
 
 # _render_preprocessing_result: 전처리 결과 출력
@@ -137,6 +231,8 @@ def _render_preprocessing_result():
         st.metric("전체 행 수", f"{summary['row_count']:,}")
     with col2:
         st.metric("전체 컬럼 수", summary["column_count"])
+    
+    st.divider()
 
     # 데이터 품질 리포트 출력
     flag_summary = summary.get("flag_summary", {})
@@ -165,21 +261,52 @@ def _render_preprocessing_result():
     else:
         st.write("#### 데이터 품질 리포트")
         st.success("데이터 품질 오류가 발견되지 않았습니다.")
+    
+    st.divider()
 
     # 전처리 완료 데이터 미리보기
     st.write("#### 전처리 완료 데이터 미리보기")
 
-    # Flag 컬럼 제외하고 표시
-    for table_type, df in preprocessed_tables.items():
-        st.write(f"**{table_type} 테이블**")
-        display_columns = [
-            col for col in df.columns
-            if not col.startswith("is_")
-        ]
-        st.dataframe(
-            df[display_columns].head(20),
-            use_container_width=True
-        )
+    table_types = _get_ordered_table_types(preprocessed_tables)
+
+    tab_labels = [
+        f"{_get_table_icon(table_type)} {_get_table_label(table_type)}"
+        for table_type in table_types
+    ]
+
+    tabs = st.tabs(tab_labels)
+
+    for tab, table_type in zip(tabs, table_types):
+        with tab:
+            df = preprocessed_tables[table_type]
+
+            st.write(f"### {_get_table_label(table_type)} 테이블")
+            st.caption(f"내부 테이블 타입: `{table_type}`")
+
+            # Flag 컬럼 제외하고 표시
+            display_columns = [
+                col for col in df.columns
+                if not col.startswith("is_")
+            ]
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric("행 수", f"{len(df):,}")
+
+            with col2:
+                st.metric("전체 컬럼 수", len(df.columns))
+
+            with col3:
+                st.metric("표시 컬럼 수", len(display_columns))
+
+            with st.expander("컬럼 목록 보기"):
+                st.write(display_columns)
+
+            st.dataframe(
+                df[display_columns].head(20),
+                use_container_width=True
+            )
 
     # 재실행 버튼
     if st.button("전처리 재실행"):

@@ -25,7 +25,8 @@ from app.streamlit.session import (
     PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
     PRODUCT_RESULT,
-    CATEGORY_RESULT
+    CATEGORY_RESULT,
+    ANALYSIS_STATUS
 )
 from app.streamlit.constants import CHART_COLORS
 
@@ -146,9 +147,23 @@ def _run_product(preprocessed_tables, column_registry):
     with st.spinner("상품 분석 중..."):
         try:
             product_result = run_product(preprocessed_tables, column_registry)
+
+            # 분석 성공 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["product"] = "success"
+
             set_state(PRODUCT_RESULT, product_result)
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.rerun()
+
         except ValueError as e:
+            # 분석 실패 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["product"] = "failed"
+
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.error(f"상품 분석 중 오류가 발생했습니다: {e}")
 
 
@@ -171,9 +186,23 @@ def _run_category(preprocessed_tables, column_registry):
     with st.spinner("카테고리 분석 중..."):
         try:
             category_result = run_category(preprocessed_tables, column_registry)
+
+            # 분석 성공 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["category"] = "success"
+
             set_state(CATEGORY_RESULT, category_result)
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.rerun()
+
         except ValueError as e:
+            # 분석 실패 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["category"] = "failed"
+
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.error(f"카테고리 분석 중 오류가 발생했습니다: {e}")
 
 
@@ -296,7 +325,12 @@ def _render_product_result():
 
     # 재실행 버튼
     if st.button("재실행", key="product_rerun"):
+        analysis_status = get_state(ANALYSIS_STATUS) or {}
+        analysis_status.pop("product", None)
+
         set_state(PRODUCT_RESULT, None)
+        set_state(ANALYSIS_STATUS, analysis_status)
+
         st.rerun()
 
 
@@ -387,5 +421,10 @@ def _render_category_result():
 
     # 재실행 버튼
     if st.button("재실행", key="category_rerun"):
+        analysis_status = get_state(ANALYSIS_STATUS) or {}
+        analysis_status.pop("category", None)
+
         set_state(CATEGORY_RESULT, None)
+        set_state(ANALYSIS_STATUS, analysis_status)
+
         st.rerun()

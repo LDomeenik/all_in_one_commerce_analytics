@@ -24,7 +24,8 @@ from app.streamlit.session import (
     COLUMN_REGISTRY,
     PREPROCESSED_TABLES,
     DIAGNOSIS_RESULT,
-    DELIVERY_RESULT
+    DELIVERY_RESULT,
+    ANALYSIS_STATUS
 )
 from app.streamlit.constants import CHART_COLORS
 
@@ -92,9 +93,23 @@ def _run_delivery(preprocessed_tables, column_registry):
     with st.spinner("배송 분석 중..."):
         try:
             delivery_result = run_delivery(preprocessed_tables, column_registry)
+
+            # 분석 성공 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["delivery"] = "success"
+
             set_state(DELIVERY_RESULT, delivery_result)
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.rerun()
+
         except ValueError as e:
+            # 분석 실패 상태 저장
+            analysis_status = get_state(ANALYSIS_STATUS) or {}
+            analysis_status["delivery"] = "failed"
+
+            set_state(ANALYSIS_STATUS, analysis_status)
+
             st.error(f"배송 분석 중 오류가 발생했습니다: {e}")
 
 
@@ -229,5 +244,10 @@ def _render_delivery_result():
 
     # 재실행 버튼
     if st.button("재실행"):
+        analysis_status = get_state(ANALYSIS_STATUS) or {}
+        analysis_status.pop("delivery", None)
+
         set_state(DELIVERY_RESULT, None)
+        set_state(ANALYSIS_STATUS, analysis_status)
+
         st.rerun()

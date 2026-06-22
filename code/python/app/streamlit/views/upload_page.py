@@ -182,6 +182,98 @@ def _render_table_type_selector(files_dict: dict):
         st.success("테이블 유형이 확정되었습니다.")
 
 
+# _get_ordered_table_types: 테이블 탭 출력 순서 반환
+def _get_ordered_table_types(data: dict) -> list:
+    """
+    테이블 타입을 지정된 우선순위에 따라 정렬합니다.
+
+    우선순위:
+        1. order
+        2. order_item
+        3. customer
+        4. 그 외 추가 테이블
+
+    Args:
+        data (dict): 테이블 타입을 key로 가지는 딕셔너리
+
+    Returns:
+        list: 정렬된 테이블 타입 리스트
+
+    Raises:
+        없음
+    """
+
+    priority = ["order", "order_item", "customer"]
+
+    ordered = [
+        table_type
+        for table_type in priority
+        if table_type in data
+    ]
+
+    others = [
+        table_type
+        for table_type in data.keys()
+        if table_type not in priority
+    ]
+
+    return ordered + others
+
+
+# _get_table_icon: 테이블 타입별 아이콘 반환
+def _get_table_icon(table_type: str) -> str:
+    """
+    테이블 타입에 맞는 아이콘을 반환합니다.
+
+    Args:
+        table_type (str): 테이블 타입
+
+    Returns:
+        str: 아이콘 문자열
+
+    Raises:
+        없음
+    """
+
+    icon_map = {
+        "order": "📦",
+        "order_item": "🧾",
+        "customer": "👥",
+        "product": "🛍️",
+        "payment": "💳",
+        "delivery": "🚚"
+    }
+
+    return icon_map.get(table_type, "📄")
+
+
+# _get_table_label: 테이블 타입별 표시명 반환
+def _get_table_label(table_type: str) -> str:
+    """
+    테이블 타입에 맞는 사용자 표시명을 반환합니다.
+
+    Args:
+        table_type (str): 테이블 타입
+
+    Returns:
+        str: 사용자 표시명
+
+    Raises:
+        없음
+    """
+
+    label_map = {
+        "order": "주문",
+        "order_item": "주문 상품",
+        "customer": "고객",
+        "product": "상품",
+        "payment": "결제",
+        "delivery": "배송"
+    }
+
+    return label_map.get(table_type, table_type)
+
+
 # _render_tables_preview: 분류 결과 미리보기
 def _render_tables_preview():
     """
@@ -204,19 +296,40 @@ def _render_tables_preview():
     if not tables:
         return
 
-    # 각 테이블별 미리보기 출력
-    for table_type, df in tables.items():
+    st.write("#### 업로드 데이터 미리보기")
 
-        # 테이블 유형 헤더 출력
-        st.subheader(f"{table_type} 테이블")
+    # 테이블별 탭 순서 정렬
+    table_types = _get_ordered_table_types(tables)
 
-        # 행/컬럼 수 출력
-        col1, col2 = st.columns(2)
+    tab_labels = [
+        f"{_get_table_icon(table_type)} {_get_table_label(table_type)}"
+        for table_type in table_types
+    ]
 
-        with col1:
-            st.metric("행 수", f"{len(df):,}")
-        with col2:
-            st.metric("컬럼 수", len(df.columns))
+    tabs = st.tabs(tab_labels)
 
-        # 데이터 미리보기 출력 (상위 5행)
-        st.dataframe(df.head(5), use_container_width=True)
+    for tab, table_type in zip(tabs, table_types):
+        with tab:
+            df = tables[table_type]
+
+            st.write(f"### {_get_table_label(table_type)} 테이블")
+            st.caption(f"내부 테이블 타입: `{table_type}`")
+
+            # 행/컬럼 수 출력
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.metric("행 수", f"{len(df):,}")
+
+            with col2:
+                st.metric("컬럼 수", len(df.columns))
+
+            # 컬럼 목록 간단 표시
+            with st.expander("컬럼 목록 보기"):
+                st.write(list(df.columns))
+
+            # 데이터 미리보기 출력
+            st.dataframe(
+                df.head(5),
+                use_container_width=True
+            )

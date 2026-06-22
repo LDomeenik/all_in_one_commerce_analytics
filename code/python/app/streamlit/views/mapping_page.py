@@ -283,51 +283,53 @@ def _render_human_review(mapping_result: dict, conflicts: dict):
     user_selections = {}
 
     # 테이블별로 컬럼 매핑 selectbox 출력
-    for table_type, table_mapping in mapping_result.items():
-        st.write(f"**{table_type} 테이블**")
+    tabs = st.tabs(list(mapping_result.keys()))
+    for tab, (table_type, table_mapping) in zip(tabs, mapping_result.items()):
 
-        for source_column, info in table_mapping.items():
-            mapped_to = info["mapped_to"]
-            confidence = info["confidence"]
-            status = _get_review_status(confidence, mapped_to)
+        with tab:
+            for source_column, info in table_mapping.items():
+                mapped_to = info["mapped_to"]
+                confidence = info["confidence"]
+                status = _get_review_status(confidence, mapped_to)
 
-            # 충돌 컬럼 여부 확인 (해당 테이블이 충돌에 포함된 경우)
-            is_conflict = (
-                mapped_to is not None
-                and mapped_to in conflicts
-                and any(t == table_type for t, _ in conflicts[mapped_to])
-            )
+                # 충돌 컬럼 여부 확인 (해당 테이블이 충돌에 포함된 경우)
+                is_conflict = (
+                    mapped_to is not None
+                    and mapped_to in conflicts
+                    and any(t == table_type for t, _ in conflicts[mapped_to])
+                )
 
-            # 현재 매핑값의 selectbox 기본 인덱스 설정
-            if mapped_to in standard_column_list:
-                default_index = standard_column_list.index(mapped_to)
-            else:
-                default_index = 0
+                # 현재 매핑값의 selectbox 기본 인덱스 설정
+                if mapped_to in standard_column_list:
+                    default_index = standard_column_list.index(mapped_to)
+                else:
+                    default_index = 0
 
-            # 검수 상태별 아이콘 라벨
-            if is_conflict:
-                label = f"⚠️ {source_column}"
-            elif status == "미매핑":
-                label = f"🔴 {source_column}"
-            elif status == "검수 필요":
-                label = f"🟡 {source_column}"
-            elif status == "확인 필요":
-                label = f"🟢 {source_column}"
-            else:
-                label = f"✅ {source_column}"
+                # 검수 상태별 아이콘 라벨
+                if is_conflict:
+                    label = f"⚠️ {source_column}"
+                elif status == "미매핑":
+                    label = f"🔴 {source_column}"
+                elif status == "검수 필요":
+                    label = f"🟡 {source_column}"
+                elif status == "확인 필요":
+                    label = f"🟢 {source_column}"
+                else:
+                    label = f"✅ {source_column}"
 
-            # 사용자 매핑 선택 (key: mapping_select_{테이블유형}_{원본컬럼명})
-            selected = st.selectbox(
-                label=label,
-                options=standard_column_list,
-                index=default_index,
-                key=f"mapping_select_{table_type}_{source_column}"
-            )
-            user_selections[f"{table_type}_{source_column}"] = selected
+                # 사용자 매핑 선택 (key: mapping_select_{테이블유형}_{원본컬럼명})
+                selected = st.selectbox(
+                    label=label,
+                    options=standard_column_list,
+                    index=default_index,
+                    key=f"mapping_select_{table_type}_{source_column}"
+                )
+                user_selections[f"{table_type}_{source_column}"] = selected
 
-        st.divider()
+    st.divider()
 
     # 최종 매핑 확정 버튼
+    st.text("⚠️ 반드시 모든 테이블의 컬럼을 검수한 후 확정해주세요.")
     if st.button("최종 매핑 확정", type="primary"):
 
         # session_state에서 충돌 해소 선택값 수집

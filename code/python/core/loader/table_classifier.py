@@ -41,6 +41,14 @@ TABLE_RULES = {
     "delivery": {
         "required": ["shipped_date"],
         "optional": ["delivered_date", "estimated_delivery_date", "delivery_days", "logistics_id"]
+    },
+    "event": {
+        "required": ["event_name", "event_time"],
+        "optional": ["session_id", "customer_id", "page_url", "event_value"]
+    },
+    "experiment": {
+        "required": ["experiment_id", "variant", "conversion"],
+        "optional": ["customer_id", "conversion_value"]
     }
 }
 
@@ -83,7 +91,7 @@ def infer_table_type(df: pd.DataFrame) -> str:
     Returns:
         str: 추론된 테이블 유형
             "order" / "order_item" / "customer" / "product"
-            "payment" / "delivery" / "unknown"
+            "payment" / "delivery" / "event" / "experiment" / "unknown"
 
     Raises:
         없음

@@ -1,25 +1,25 @@
 {
   "order_id": {
     "type": "string",
-    "required_for": ["eda", "kpi", "cohort", "rfm", "product", "delivery"],
+    "required_for": ["eda", "kpi", "cohort", "rfm", "product", "delivery", "ltv", "market_basket"],
     "grain": "order",
     "category": "core"
   },
   "order_date": {
     "type": "date",
-    "required_for": ["eda", "kpi", "cohort", "rfm", "delivery"],
+    "required_for": ["eda", "kpi", "cohort", "rfm", "delivery", "ltv", "aarrr"],
     "grain": "order",
     "category": "core"
   },
   "customer_id": {
     "type": "string",
-    "required_for": ["cohort", "rfm"],
+    "required_for": ["cohort", "rfm", "ltv", "aarrr"],
     "grain": "order",
     "category": "core"
   },
   "revenue": {
     "type": "numeric",
-    "required_for": ["kpi", "rfm"],
+    "required_for": ["kpi", "rfm", "ltv", "aarrr"],
     "grain": "order",
     "category": "core"
   },
@@ -61,19 +61,37 @@
   },
   "signup_date": {
     "type": "date",
+    "required_for": ["aarrr"],
+    "grain": "customer",
+    "category": "customer"
+  },
+  "order_channel": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order",
+    "category": "customer"
+  },
+  "acquisition_channel": {
+    "type": "string",
     "required_for": [],
     "grain": "customer",
     "category": "customer"
   },
+  "referral_code": {
+    "type": "string",
+    "required_for": [],
+    "grain": "order",
+    "category": "customer"
+  },
   "product_id": {
     "type": "string",
-    "required_for": ["product"],
+    "required_for": ["product", "market_basket"],
     "grain": "order_item",
     "category": "product"
   },
   "product_name": {
     "type": "string",
-    "required_for": [],
+    "required_for": ["market_basket"],
     "grain": "order_item",
     "category": "product"
   },
@@ -202,6 +220,60 @@
     "required_for": [],
     "grain": "order",
     "category": "core"
+  },
+  "event_name": {
+    "type": "string",
+    "required_for": ["funnel"],
+    "grain": "event",
+    "category": "event"
+  },
+  "session_id": {
+    "type": "string",
+    "required_for": [],
+    "grain": "event",
+    "category": "event"
+  },
+  "event_time": {
+    "type": "date",
+    "required_for": ["funnel"],
+    "grain": "event",
+    "category": "event"
+  },
+  "event_value": {
+    "type": "numeric",
+    "required_for": [],
+    "grain": "event",
+    "category": "event"
+  },
+  "page_url": {
+    "type": "string",
+    "required_for": [],
+    "grain": "event",
+    "category": "event"
+  },
+  "experiment_id": {
+    "type": "string",
+    "required_for": ["ab_test"],
+    "grain": "experiment",
+    "category": "experiment"
+  },
+  "variant": {
+    "type": "string",
+    "required_for": ["ab_test"],
+    "grain": "experiment",
+    "category": "experiment"
+  },
+  "conversion": {
+    "type": "boolean",
+    "required_for": ["ab_test"],
+    "grain": "experiment",
+    "category": "experiment"
+  },
+  "conversion_value": {
+    "type": "numeric",
+    "required_for": [],
+    "grain": "experiment",
+    "category": "experiment"
   },
   "delivery_days": {
     "type": "integer",

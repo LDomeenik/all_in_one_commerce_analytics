@@ -329,5 +329,115 @@
     "review_cnt",
     "리뷰수",
     "리뷰개수"
+  ],
+
+  "order_channel": [
+    "channel",
+    "order_channel",
+    "sales_channel",
+    "platform",
+    "purchase_channel",
+    "order_source"
+  ],
+
+  "acquisition_channel": [
+    "acquisition_channel",
+    "utm_source",
+    "traffic_source",
+    "marketing_channel",
+    "referral_source",
+    "first_touch_channel"
+  ],
+
+  "referral_code": [
+    "referral_code",
+    "ref_code",
+    "coupon_code",
+    "invite_code",
+    "promo_code",
+    "referrer_code",
+    "affiliate_code"
+  ],
+
+  "event_name": [
+    "event_name",
+    "event_type",
+    "action",
+    "event_action",
+    "event",
+    "hit_type",
+    "interaction_type"
+  ],
+
+  "session_id": [
+    "session_id",
+    "sessionid",
+    "visit_id",
+    "visitid",
+    "ga_session_id",
+    "session_key"
+  ],
+
+  "event_time": [
+    "event_time",
+    "event_timestamp",
+    "event_at",
+    "hit_timestamp",
+    "event_datetime",
+    "client_timestamp"
+  ],
+
+  "event_value": [
+    "event_value",
+    "value",
+    "event_revenue",
+    "transaction_value",
+    "hit_value"
+  ],
+
+  "page_url": [
+    "page_url",
+    "url",
+    "page_path",
+    "page_location",
+    "page",
+    "document_path"
+  ],
+
+  "experiment_id": [
+    "experiment_id",
+    "test_id",
+    "ab_test_id",
+    "experiment_key",
+    "test_name",
+    "experiment_name"
+  ],
+
+  "variant": [
+    "variant",
+    "variation",
+    "treatment",
+    "group",
+    "test_group",
+    "ab_group",
+    "experiment_group",
+    "condition"
+  ],
+
+  "conversion": [
+    "conversion",
+    "converted",
+    "is_converted",
+    "is_purchase",
+    "goal_completion",
+    "success",
+    "outcome"
+  ],
+
+  "conversion_value": [
+    "conversion_value",
+    "goal_value",
+    "transaction_revenue",
+    "purchase_value"
   ]
 }

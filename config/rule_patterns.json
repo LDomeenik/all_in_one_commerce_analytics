@@ -142,5 +142,94 @@
       "(signup|join|register|enroll).*(date|dt|at)$"
     ],
     "confidence": 0.75
+  },
+
+  "order_channel": {
+    "patterns": [
+      "(order|sales|purchase|platform).*(channel|source)$",
+      "^(channel|platform)$"
+    ],
+    "confidence": 0.70
+  },
+
+  "acquisition_channel": {
+    "patterns": [
+      "(acquisition|utm|traffic|marketing|first).*(channel|source)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "referral_code": {
+    "patterns": [
+      "(referral|ref|promo|affiliate|invite).*(code|key|id)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "event_name": {
+    "patterns": [
+      "(event|action|hit).*(name|type|action)$",
+      "^(event|action)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "session_id": {
+    "patterns": [
+      "(session|visit).*(id|key|no)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "event_time": {
+    "patterns": [
+      "(event|hit|interaction).*(time|timestamp|at|datetime)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "event_value": {
+    "patterns": [
+      "(event|hit).*(value|revenue|amount)$"
+    ],
+    "confidence": 0.70
+  },
+
+  "page_url": {
+    "patterns": [
+      "(page|document).*(url|path|location)$",
+      "^(url|page_path)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "experiment_id": {
+    "patterns": [
+      "(experiment|test|ab).*(id|key|name|no)$"
+    ],
+    "confidence": 0.85
+  },
+
+  "variant": {
+    "patterns": [
+      "(variant|variation|treatment|experiment).*(group|name|type)$",
+      "^(variant|variation|treatment)$"
+    ],
+    "confidence": 0.70
+  },
+
+  "conversion": {
+    "patterns": [
+      "^(conversion|converted|is_converted|is_purchase)$",
+      "(goal|conversion).*(complete|completion|flag)$"
+    ],
+    "confidence": 0.75
+  },
+
+  "conversion_value": {
+    "patterns": [
+      "(conversion|goal|transaction).*(value|revenue|amount)$"
+    ],
+    "confidence": 0.75
   }
 }

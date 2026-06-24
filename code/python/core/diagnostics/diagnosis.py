@@ -27,7 +27,19 @@ ANALYSIS_MODULES = {
     "rfm" : "RFM / 재구매 분석",
     "product" : "상품 분석",
     "category" : "카테고리 분석",
-    "delivery" : "배송 / 운영 분석"
+    "delivery" : "배송 / 운영 분석",
+    "ltv": "LTV 분석",
+    "market_basket": "장바구니 연관 분석",
+    "aarrr": "AARRR 분석",
+    "funnel": "퍼널 분석",
+    "ab_test": "A/B 테스트"
+}
+
+# 퍼널 분석을 위한 OR 조건
+SPECIAL_CONDITIONS = {
+    "funnel": {
+        "or_required": ["customer_id", "session_id"]
+    }
 }
 
 
@@ -84,7 +96,12 @@ def _get_optional_columns(module: str) -> list:
         "rfm" : ["core", "customer", "product"],
         "product" : ["product"],
         "category" : ["product"],
-        "delivery" : ["logistics"]
+        "delivery" : ["logistics"],
+        "ltv" : ["core", "customer"],
+        "market_basket" : ["product"],
+        "aarrr" : ["core", "customer"],
+        "funnel" : ["event"],
+        "ab_test" : ["experiment"]
     }
 
     related_categories = module_category_map.get(module, [])
@@ -93,7 +110,6 @@ def _get_optional_columns(module: str) -> list:
         col for col, info in standard_columns.items()
         if col not in required_columns
         and info["category"] in related_categories
-        and info.get("category") != "derived"
     ]
 
     return optional_columns
@@ -146,6 +162,13 @@ def _diagnose_module(df: pd.DataFrame, module: str) -> dict:
     # 실행 가능 여부 판단
     available = len(missing_columns) == 0
 
+    # OR 조건이 있는 모듈이면 OR 조건 체크
+    if module in SPECIAL_CONDITIONS:
+        or_cols = SPECIAL_CONDITIONS[module].get("or_required", [])
+        if or_cols:
+            or_satisfied = any(col in df.columns for col in or_cols)
+            available = available and or_satisfied
+
     return {
         "available": available,
         "status": "실행 가능" if available else "실행 불가",
@@ -182,12 +205,21 @@ def diagnose(tables: dict) -> dict:
     if not tables:
         raise ValueError("진단할 데이터가 없습니다.")
     
+    standard_cols = load_standard_columns()
+
+    # 파생 컬럼 목록 추출
+    derived_cols = {
+        col for col, info in standard_cols.items()
+        if info["category"] == "derived"
+    }
+
     # 모든 테이블에 존재하는 컬럼 목록 합집합
     all_columns = set()
+
     for df in tables.values():
         all_columns.update(
             col for col in df.columns
-            if not col.startswith("is_")
+            if col not in derived_cols
         )
 
     # 빈 df에 컬럼만 설정해서 _diagnose_module에 전달
